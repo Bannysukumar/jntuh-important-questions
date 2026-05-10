@@ -10,7 +10,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'robots.txt', 'sitemap.xml'],
+      includeAssets: ['favicon.svg', 'robots.txt'],
       manifest: {
         name: 'JNTUH Important Questions',
         short_name: 'JNTUH IQ',
@@ -34,7 +34,7 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,xml,txt}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,txt}'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
