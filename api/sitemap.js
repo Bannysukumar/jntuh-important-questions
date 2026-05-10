@@ -15,12 +15,9 @@ const PATHS = [
   { path: '/disclaimer', changefreq: 'yearly', priority: '0.35' },
 ]
 
+// Do not use VERCEL_URL — it is often a preview hostname and mismatches GSC property URLs.
 function siteUrl() {
-  const raw =
-    process.env.SITE_URL ||
-    process.env.VITE_SITE_URL ||
-    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '') ||
-    DEFAULT_SITE
+  const raw = process.env.SITE_URL || process.env.VITE_SITE_URL || DEFAULT_SITE
   return String(raw).replace(/\/$/, '')
 }
 
