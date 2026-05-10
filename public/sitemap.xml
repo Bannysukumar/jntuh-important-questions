@@ -11,11 +11,6 @@
     <priority>0.95</priority>
   </url>
   <url>
-    <loc>https://jntuh-important-questions.vercel.app/r22/ece/2-1/signals-and-systems/unit-1-important-questions</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-  <url>
     <loc>https://jntuh-important-questions.vercel.app/about</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
