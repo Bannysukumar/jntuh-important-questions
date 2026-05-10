@@ -1,0 +1,75 @@
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { RootLayout } from '@/components/layout/RootLayout'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { HomePage } from '@/pages/HomePage'
+import { SearchPage } from '@/pages/SearchPage'
+import { UnitQuestionPage } from '@/pages/UnitQuestionPage'
+import { FavoritesPage } from '@/pages/FavoritesPage'
+import { LoginGatePage } from '@/pages/LoginGatePage'
+import { ProfilePage } from '@/pages/ProfilePage'
+import { AboutPage } from '@/pages/AboutPage'
+import { HelpCenterPage } from '@/pages/HelpCenterPage'
+import { AdminLayout } from '@/pages/admin/AdminLayout'
+import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage'
+import { AdminBackupPage } from '@/pages/admin/AdminBackupPage'
+import { AdminBranchesPage } from '@/pages/admin/AdminBranchesPage'
+import { AdminCommentsPage } from '@/pages/admin/AdminCommentsPage'
+import { AdminFeedbackPage } from '@/pages/admin/AdminFeedbackPage'
+import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
+import { AdminQuestionCreatePage, AdminQuestionEditPage } from '@/pages/admin/AdminQuestionEditorPage'
+import { AdminQuestionsPage } from '@/pages/admin/AdminQuestionsPage'
+import { AdminRoute } from '@/pages/admin/AdminRoute'
+import { AdminSEOPage } from '@/pages/admin/AdminSEOPage'
+import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage'
+import { AdminSubjectsPage } from '@/pages/admin/AdminSubjectsPage'
+import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
+
+export const router = createBrowserRouter([
+  {
+    element: <RootLayout />,
+    children: [
+      {
+        path: '/',
+        element: <MainLayout />,
+        children: [
+          { index: true, element: <HomePage /> },
+          { path: 'search', element: <SearchPage /> },
+          {
+            path: ':regulation/:branch/:semester/:subjectSlug/:unitSlug',
+            element: <UnitQuestionPage />,
+          },
+          { path: 'favorites', element: <FavoritesPage /> },
+          { path: 'profile', element: <ProfilePage /> },
+          { path: 'about', element: <AboutPage /> },
+          { path: 'help', element: <HelpCenterPage /> },
+          { path: '*', element: <Navigate to="/" replace /> },
+        ],
+      },
+      { path: '/login', element: <LoginGatePage /> },
+      {
+        path: '/admin',
+        element: (
+          <AdminRoute>
+            <AdminLayout />
+          </AdminRoute>
+        ),
+        children: [
+          { index: true, element: <AdminDashboardPage /> },
+          { path: 'questions/new', element: <AdminQuestionCreatePage /> },
+          { path: 'questions/:id/edit', element: <AdminQuestionEditPage /> },
+          { path: 'questions', element: <AdminQuestionsPage /> },
+          { path: 'subjects', element: <AdminSubjectsPage /> },
+          { path: 'branches', element: <AdminBranchesPage /> },
+          { path: 'comments', element: <AdminCommentsPage /> },
+          { path: 'feedback', element: <AdminFeedbackPage /> },
+          { path: 'users', element: <AdminUsersPage /> },
+          { path: 'analytics', element: <AdminAnalyticsPage /> },
+          { path: 'seo', element: <AdminSEOPage /> },
+          { path: 'settings', element: <AdminSettingsPage /> },
+          { path: 'backup', element: <AdminBackupPage /> },
+          { path: '*', element: <Navigate to="/admin" replace /> },
+        ],
+      },
+    ],
+  },
+])

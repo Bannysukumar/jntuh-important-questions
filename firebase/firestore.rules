@@ -1,0 +1,143 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userProfileRoleIsAdmin() {
+      let path = /databases/$(database)/documents/users/$(request.auth.uid);
+      return exists(path) && (
+        get(path).data.role == 'admin'
+        || get(path).data.role == 'ADMIN'
+      );
+    }
+
+    // Dashboard + elevated Firestore access: `admins/{uid}` OR `users/{uid}.role` (Console / trusted writes).
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        || userProfileRoleIsAdmin()
+      );
+    }
+
+    match /questionSets/{id} {
+      allow read: if resource.data.status == 'published' || isAdmin();
+      allow create, update, delete: if isAdmin();
+    }
+
+    match /comments/{id} {
+      allow read: if resource.data.status == 'visible' || isAdmin();
+
+      function commentParentOk() {
+        let pid = request.resource.data.parentId;
+        return pid == null
+          || (exists(/databases/$(database)/documents/comments/$(pid))
+              && get(/databases/$(database)/documents/comments/$(pid)).data.questionSetId
+                 == request.resource.data.questionSetId
+              && (get(/databases/$(database)/documents/comments/$(pid)).data.status == 'visible'
+                  || isAdmin()));
+      }
+
+      allow create: if isSignedIn()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.body.size() > 2
+        && request.resource.data.body.size() < 4000
+        && commentParentOk();
+      allow update, delete: if isAdmin()
+        || (isSignedIn() && resource.data.authorUid == request.auth.uid);
+    }
+
+    match /users/{uid} {
+      function userOwnsDoc() {
+        return isSignedIn() && request.auth.uid == uid;
+      }
+      // Clients may keep student or promote to admin only if `admins/{uid}` exists (Console bypasses rules).
+      function roleFieldOkOnUpdate() {
+        return !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])
+          || request.resource.data.role == 'student'
+          || (request.resource.data.role == 'admin'
+              && exists(/databases/$(database)/documents/admins/$(request.auth.uid)));
+      }
+      allow get, list: if userOwnsDoc() || isAdmin();
+      allow create: if userOwnsDoc()
+        && request.resource.data.uid == uid
+        && (request.resource.data.role == 'student'
+            || (request.resource.data.role == 'admin'
+                && exists(/databases/$(database)/documents/admins/$(uid))));
+      allow update: if isAdmin() || (userOwnsDoc() && roleFieldOkOnUpdate());
+      allow delete: if isAdmin();
+    }
+
+    // Single-doc reads only (getDoc). No collection listing.
+    match /admins/{adminUid} {
+      allow get: if isSignedIn() && request.auth.uid == adminUid;
+      allow list: if false;
+      allow create, update, delete: if false;
+    }
+
+    match /favorites/{id} {
+      allow read, update, delete: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.uid == request.auth.uid;
+    }
+
+    // Public site metadata (optional). Readable by anyone; writes admin-only.
+    match /siteConfig/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Suggestions / feedback from help center. Create by anyone (validated); read/update admin-only.
+    match /feedback/{docId} {
+      function feedbackKeysOk() {
+        return request.resource.data.keys().hasOnly([
+          'message',
+          'contactEmail',
+          'authorUid',
+          'authorName',
+          'createdAt',
+          'status',
+        ]);
+      }
+
+      function feedbackCreateValid() {
+        return feedbackKeysOk()
+          && request.resource.data.message is string
+          && request.resource.data.message.size() >= 10
+          && request.resource.data.message.size() <= 4000
+          && request.resource.data.status == 'new'
+          && request.resource.data.createdAt is timestamp
+          && (
+            !request.resource.data.keys().hasAny(['contactEmail'])
+            || (
+              request.resource.data.contactEmail is string
+              && request.resource.data.contactEmail.size() <= 254
+            )
+          )
+          && (
+            !request.resource.data.keys().hasAny(['authorName'])
+            || (
+              request.resource.data.authorName is string
+              && request.resource.data.authorName.size() <= 120
+            )
+          )
+          && (
+            request.auth == null
+              ? !request.resource.data.keys().hasAny(['authorUid'])
+              : request.resource.data.authorUid == request.auth.uid
+          );
+      }
+
+      allow read: if isAdmin();
+      allow create: if feedbackCreateValid();
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status'])
+        && request.resource.data.status in ['new', 'read', 'archived'];
+      allow delete: if isAdmin();
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
