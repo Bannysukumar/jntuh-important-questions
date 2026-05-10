@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { RootLayout } from '@/components/layout/RootLayout'
 import { MainLayout } from '@/components/layout/MainLayout'
@@ -9,7 +10,10 @@ import { LoginGatePage } from '@/pages/LoginGatePage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { AboutPage } from '@/pages/AboutPage'
 import { HelpCenterPage } from '@/pages/HelpCenterPage'
-import { AdminLayout } from '@/pages/admin/AdminLayout'
+import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage'
+import { TermsOfServicePage } from '@/pages/TermsOfServicePage'
+import { DisclaimerPage } from '@/pages/DisclaimerPage'
+import { AdminRoute } from '@/pages/admin/AdminRoute'
 import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage'
 import { AdminBackupPage } from '@/pages/admin/AdminBackupPage'
 import { AdminBranchesPage } from '@/pages/admin/AdminBranchesPage'
@@ -18,11 +22,22 @@ import { AdminFeedbackPage } from '@/pages/admin/AdminFeedbackPage'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { AdminQuestionCreatePage, AdminQuestionEditPage } from '@/pages/admin/AdminQuestionEditorPage'
 import { AdminQuestionsPage } from '@/pages/admin/AdminQuestionsPage'
-import { AdminRoute } from '@/pages/admin/AdminRoute'
 import { AdminSEOPage } from '@/pages/admin/AdminSEOPage'
 import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage'
 import { AdminSubjectsPage } from '@/pages/admin/AdminSubjectsPage'
 import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
+
+const AdminLayout = lazy(() =>
+  import('@/pages/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })),
+)
+
+function AdminFallback() {
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center bg-[#070a12] text-sm text-slate-400">
+      Loading admin console…
+    </div>
+  )
+}
 
 export const router = createBrowserRouter([
   {
@@ -42,6 +57,9 @@ export const router = createBrowserRouter([
           { path: 'profile', element: <ProfilePage /> },
           { path: 'about', element: <AboutPage /> },
           { path: 'help', element: <HelpCenterPage /> },
+          { path: 'privacy', element: <PrivacyPolicyPage /> },
+          { path: 'terms', element: <TermsOfServicePage /> },
+          { path: 'disclaimer', element: <DisclaimerPage /> },
           { path: '*', element: <Navigate to="/" replace /> },
         ],
       },
@@ -49,9 +67,11 @@ export const router = createBrowserRouter([
       {
         path: '/admin',
         element: (
-          <AdminRoute>
-            <AdminLayout />
-          </AdminRoute>
+          <Suspense fallback={<AdminFallback />}>
+            <AdminRoute>
+              <AdminLayout />
+            </AdminRoute>
+          </Suspense>
         ),
         children: [
           { index: true, element: <AdminDashboardPage /> },

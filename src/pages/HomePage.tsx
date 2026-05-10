@@ -1,8 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { JsonLdOrganization } from '@/components/seo/JsonLd'
+import {
+  JsonLdFAQPage,
+  JsonLdOrganization,
+  JsonLdWebSiteSearch,
+} from '@/components/seo/JsonLd'
 import { SEOHead } from '@/components/seo/SEOHead'
+import { getHomeSeoFaqs } from '@/lib/homeFaqSeo'
 import { REGULATIONS, SITE_NAME } from '@/lib/constants'
+import { GLOBAL_SEO_KEYWORDS } from '@/lib/seoKeywords'
 import { slugify, unitSegment } from '@/lib/slug'
 import { fetchFeatured } from '@/services/questionsApi'
 
@@ -29,6 +36,8 @@ function FeaturedSkeleton() {
 }
 
 export function HomePage() {
+  const homeFaqs = useMemo(() => getHomeSeoFaqs(), [])
+
   const { data: featured = [], isPending, isError } = useQuery({
     queryKey: ['featured'],
     queryFn: () => fetchFeatured(8),
@@ -37,18 +46,14 @@ export function HomePage() {
   return (
     <>
       <SEOHead
-        title={`${SITE_NAME} — JNTUH unit-wise important questions`}
-        description="Search and download JNTUH important questions for R18, R22, and R24. Filter by branch, semester, and subject. PDFs with watermark for students."
+        title={`${SITE_NAME} — JNTUH Important Questions PDF | R18 R22 R24`}
+        description="Free JNTUH important questions & previous exam patterns for B.Tech — R18, R22, R24. Branch-wise (CSE, ECE, EEE, MECH, CIVIL), semester-wise PDF downloads, unit-wise question banks for Hyderabad & Telangana students."
         canonicalPath="/"
-        keywords={[
-          'JNTUH Important Questions',
-          'JNTUH Previous Questions',
-          'R22 Important Questions',
-          'ECE Important Questions',
-          'Unit Wise Questions PDF',
-        ]}
+        keywords={[...GLOBAL_SEO_KEYWORDS]}
       />
       <JsonLdOrganization />
+      <JsonLdWebSiteSearch />
+      <JsonLdFAQPage faqs={homeFaqs} />
 
       <div className="space-y-12">
         <section className="relative overflow-hidden rounded-3xl border border-slate-200/90 bg-gradient-to-br from-white via-sky-50/80 to-indigo-50/60 px-6 py-10 shadow-sm dark:border-slate-800/90 dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 sm:px-10 sm:py-12">
@@ -116,7 +121,20 @@ export function HomePage() {
                 View sample unit
               </Link>
             </div>
-          </div>
+            </div>
+          </section>
+
+        <section className="rounded-2xl border border-slate-200/90 bg-white px-6 py-8 shadow-sm dark:border-slate-800 dark:bg-slate-900/40 sm:px-8">
+          <h2 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
+            JNTUH important questions & question bank for engineering students
+          </h2>
+          <p className="mt-3 max-w-3xl text-pretty leading-relaxed text-slate-600 dark:text-slate-400">
+            Whether you need <strong className="font-medium text-slate-800 dark:text-slate-200">JNTUH previous questions</strong>,{' '}
+            <strong className="font-medium text-slate-800 dark:text-slate-200">mid exam important questions</strong>, or{' '}
+            <strong className="font-medium text-slate-800 dark:text-slate-200">external exam revision</strong>, this platform groups materials by regulation, branch, semester, and unit — the same structure as your syllabus. Students across{' '}
+            <abbr title="Telangana" className="no-underline">TG</abbr> and Hyderabad colleges use search and filters to jump straight to{' '}
+            <strong className="font-medium text-slate-800 dark:text-slate-200">subject-wise PDF downloads</strong> and printable lists.
+          </p>
         </section>
 
         <section>
@@ -213,6 +231,20 @@ export function HomePage() {
               ))}
             </ul>
           ) : null}
+        </section>
+
+        <section className="rounded-2xl border border-slate-200/90 bg-slate-50/90 px-6 py-8 dark:border-slate-800 dark:bg-slate-950/40 sm:px-8">
+          <h2 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
+            Frequently asked questions
+          </h2>
+          <dl className="mt-6 space-y-5">
+            {homeFaqs.map((item) => (
+              <div key={item.question}>
+                <dt className="font-semibold text-slate-900 dark:text-white">{item.question}</dt>
+                <dd className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-400">{item.answer}</dd>
+              </div>
+            ))}
+          </dl>
         </section>
       </div>
     </>

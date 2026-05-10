@@ -139,8 +139,39 @@ export function MainLayout() {
           <Outlet />
         </main>
 
-        <footer className="relative border-t border-slate-200/80 bg-white/60 py-6 text-center text-xs text-slate-500 backdrop-blur dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-500">
-          © {new Date().getFullYear()} JNTUH Important Questions · Built for students
+        <footer className="relative border-t border-slate-200/80 bg-white/60 px-4 py-8 text-center text-xs text-slate-500 backdrop-blur dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-500">
+          <nav className="mx-auto flex max-w-2xl flex-wrap items-center justify-center gap-x-4 gap-y-2">
+            <Link to="/about" className="hover:text-slate-800 dark:hover:text-slate-300">
+              About
+            </Link>
+            <span aria-hidden className="text-slate-300 dark:text-slate-600">
+              ·
+            </span>
+            <Link to="/help" className="hover:text-slate-800 dark:hover:text-slate-300">
+              Help
+            </Link>
+            <span aria-hidden className="text-slate-300 dark:text-slate-600">
+              ·
+            </span>
+            <Link to="/privacy" className="hover:text-slate-800 dark:hover:text-slate-300">
+              Privacy
+            </Link>
+            <span aria-hidden className="text-slate-300 dark:text-slate-600">
+              ·
+            </span>
+            <Link to="/terms" className="hover:text-slate-800 dark:hover:text-slate-300">
+              Terms
+            </Link>
+            <span aria-hidden className="text-slate-300 dark:text-slate-600">
+              ·
+            </span>
+            <Link to="/disclaimer" className="hover:text-slate-800 dark:hover:text-slate-300">
+              Disclaimer
+            </Link>
+          </nav>
+          <p className="mt-4">
+            © {new Date().getFullYear()} JNTUH Important Questions · Built for students across Telangana
+          </p>
         </footer>
       </div>
     </div>

@@ -181,6 +181,19 @@ export async function searchQuestionSets(params: {
   return list
 }
 
+/** Related sets for internal linking & programmatic discovery (same cohort, excluding current). */
+export async function fetchRelatedQuestionSets(current: QuestionSet, limit = 8): Promise<QuestionSet[]> {
+  const list = await searchQuestionSets({
+    regulation: current.regulation,
+    branch: current.branch,
+    semester: current.semester,
+  })
+  return list
+    .filter((q) => q.id !== current.id && q.status === 'published')
+    .sort((a, b) => b.downloadCount - a.downloadCount || b.viewCount - a.viewCount)
+    .slice(0, limit)
+}
+
 export async function fetchQuestionById(id: string): Promise<QuestionSet | null> {
   if (!isFirebaseConfigured()) {
     return SAMPLE_QUESTION_SETS.find((q) => q.id === id) ?? null

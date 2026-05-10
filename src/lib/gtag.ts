@@ -15,3 +15,22 @@ export function gtagPageView(pathWithSearch: string) {
     page_path: pathWithSearch,
   })
 }
+
+export function gtagSearch(params: { search_term?: string; regulation?: string; branch?: string; semester?: string }) {
+  if (typeof window === 'undefined' || !window.gtag) return
+  window.gtag('event', 'search', {
+    search_term: params.search_term ?? '',
+    regulation: params.regulation ?? '',
+    branch: params.branch ?? '',
+    semester: params.semester ?? '',
+  })
+}
+
+export function gtagPdfDownload(payload: { subject_code?: string; regulation?: string; unit?: number }) {
+  if (typeof window === 'undefined' || !window.gtag) return
+  window.gtag('event', 'file_download', {
+    file_extension: 'pdf',
+    link_url: typeof window !== 'undefined' ? window.location.pathname : '',
+    ...payload,
+  })
+}

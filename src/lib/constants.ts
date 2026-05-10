@@ -1,8 +1,10 @@
 import type { RegulationId } from '@/types/models'
+import { defaultWatermarkHost, SITE_URL } from '@/lib/siteUrl'
 
 export const SITE_NAME = 'JNTUH Important Questions'
-export const SITE_URL = 'https://jntuhimportantquestions.com'
-export const WATERMARK_DEFAULT = 'jntuhimportantquestions.com'
+export { SITE_URL }
+/** Hostname for PDF watermark — derived from `SITE_URL` unless overridden in PDF generator */
+export const WATERMARK_DEFAULT = defaultWatermarkHost()
 
 export const REGULATIONS: { id: RegulationId; label: string }[] = [
   { id: 'r18', label: 'R18' },

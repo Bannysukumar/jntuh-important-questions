@@ -1,3 +1,4 @@
+import { Helmet } from 'react-helmet-async'
 import { NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -95,6 +96,9 @@ export function AdminLayout() {
 
   return (
     <div className="min-h-svh bg-[#070a12] font-sans text-slate-200">
+      <Helmet>
+        <meta name="robots" content="noindex,nofollow" />
+      </Helmet>
       <div className="pointer-events-none fixed inset-0 overflow-hidden">
         <div className="absolute -left-32 top-0 h-96 w-96 rounded-full bg-cyan-500/10 blur-3xl" />
         <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-violet-600/10 blur-3xl" />

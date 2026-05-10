@@ -6,9 +6,15 @@ export function AboutPage() {
   return (
     <>
       <SEOHead
-        title="About us"
-        description={`${SITE_NAME} — unit-wise JNTUH important questions, search, PDFs, and study resources for engineering students.`}
+        title="About JNTUH Important Questions — trusted study resource"
+        description={`${SITE_NAME}: independent JNTUH important questions portal for B.Tech students — unit-wise PDFs, R18/R22/R24 search, ECE CSE EEE MECH CIVIL. Hyderabad & Telangana.`}
         canonicalPath="/about"
+        keywords={[
+          'JNTUH study material',
+          'JNTUH engineering questions',
+          'Telangana B.Tech revision',
+          SITE_NAME,
+        ]}
       />
 
       <div className="mx-auto max-w-3xl">

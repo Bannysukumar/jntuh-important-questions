@@ -1,4 +1,10 @@
+# https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Allow: /
 
-Sitemap: https://jntuhimportantquestions.com/sitemap.xml
+# Private / auth surfaces (thin utility routes — consolidate crawl budget on public content)
+Disallow: /admin
+Disallow: /login
+Disallow: /profile
+
+Sitemap: https://jntuh-important-questions.vercel.app/sitemap.xml

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { questionSetPublicPath } from '@/lib/adminPaths'
+import { unitPageKeywords } from '@/lib/seoKeywords'
 import {
   adminCreateQuestionSet,
   adminSaveQuestionSet,
@@ -291,7 +292,32 @@ function QuestionEditorForm({
             />
           </label>
           <label className="block">
-            <span className="text-xs text-slate-500">Keywords (comma-separated)</span>
+            <span className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
+              <span>Keywords (comma-separated)</span>
+              <button
+                type="button"
+                className="rounded-md border border-cyan-500/40 px-2 py-0.5 text-[11px] font-medium text-cyan-300 hover:bg-cyan-500/10"
+                onClick={() => {
+                  const u = Math.max(1, Number(form.unitNumber) || 1)
+                  const suggested = unitPageKeywords({
+                    regulation: form.regulation,
+                    branch: (form.branch || 'ece').toLowerCase(),
+                    semester: form.semester || '2-1',
+                    subjectName: form.subjectName.trim() || 'Subject',
+                    subjectCode: form.subjectCode.trim() || '',
+                    unitNumber: u,
+                  })
+                  const existing = keywordsStr
+                    .split(',')
+                    .map((s) => s.trim())
+                    .filter(Boolean)
+                  const merged = [...new Set([...existing, ...suggested])]
+                  setKeywordsStr(merged.join(', '))
+                }}
+              >
+                Merge SEO suggestions
+              </button>
+            </span>
             <input
               value={keywordsStr}
               onChange={(e) => setKeywordsStr(e.target.value)}
