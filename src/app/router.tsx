@@ -19,6 +19,7 @@ import { AdminBackupPage } from '@/pages/admin/AdminBackupPage'
 import { AdminBranchesPage } from '@/pages/admin/AdminBranchesPage'
 import { AdminCommentsPage } from '@/pages/admin/AdminCommentsPage'
 import { AdminFeedbackPage } from '@/pages/admin/AdminFeedbackPage'
+import { AdminHomeLayoutPage } from '@/pages/admin/AdminHomeLayoutPage'
 import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
 import { AdminQuestionCreatePage, AdminQuestionEditPage } from '@/pages/admin/AdminQuestionEditorPage'
 import { AdminQuestionsPage } from '@/pages/admin/AdminQuestionsPage'
@@ -75,6 +76,7 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <AdminDashboardPage /> },
+          { path: 'home', element: <AdminHomeLayoutPage /> },
           { path: 'questions/new', element: <AdminQuestionCreatePage /> },
           { path: 'questions/:id/edit', element: <AdminQuestionEditPage /> },
           { path: 'questions', element: <AdminQuestionsPage /> },

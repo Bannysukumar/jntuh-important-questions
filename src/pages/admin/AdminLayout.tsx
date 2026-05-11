@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 
 const modules: { label: string; to: string; icon: 'home' | 'doc' | 'book' | 'tree' | 'chat' | 'mail' | 'users' | 'chart' | 'search' | 'gear' | 'save' }[] = [
   { label: 'Overview', to: '/admin', icon: 'home' },
+  { label: 'Home layout', to: '/admin/home', icon: 'chart' },
   { label: 'Questions', to: '/admin/questions', icon: 'doc' },
   { label: 'Subjects', to: '/admin/subjects', icon: 'book' },
   { label: 'Branches', to: '/admin/branches', icon: 'tree' },

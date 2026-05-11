@@ -12,6 +12,7 @@ import {
   where,
 } from 'firebase/firestore'
 import { SAMPLE_QUESTION_SETS } from '@/services/mock/sampleData'
+import { releaseQuestionViewSlot, reserveQuestionViewSlot } from '@/lib/questionViewDedupe'
 import { getFirebaseDb, isFirebaseConfigured } from '@/services/firebase/config'
 import type { QuestionSet, RegulationId } from '@/types/models'
 import { slugify } from '@/lib/slug'
@@ -38,6 +39,9 @@ function mapDoc(id: string, data: Record<string, unknown>): QuestionSet {
     updatedAt: String(data.updatedAt ?? ''),
     createdBy: data.createdBy ? String(data.createdBy) : undefined,
     featured: Boolean(data.featured),
+    important: Boolean(data.important),
+    popular: Boolean(data.popular),
+    showOnHome: data.showOnHome === undefined ? true : Boolean(data.showOnHome),
     downloadCount: Number(data.downloadCount ?? 0),
     viewCount: Number(data.viewCount ?? 0),
     shareCount: Number(data.shareCount ?? 0),
@@ -148,6 +152,18 @@ export async function fetchFeatured(limitN = 8): Promise<QuestionSet[]> {
     .slice(0, limitN)
 }
 
+/** Published sets for home catalog (branch grid, top picks). */
+export async function fetchPublishedQuestionSets(maxDocs = 200): Promise<QuestionSet[]> {
+  if (!isFirebaseConfigured()) {
+    return SAMPLE_QUESTION_SETS.filter((x) => x.status === 'published')
+  }
+  const db = getFirebaseDb()
+  const snap = await getDocs(
+    query(collection(db, COLLECTION), where('status', '==', 'published'), limit(maxDocs)),
+  )
+  return snap.docs.map((d) => mapDoc(d.id, d.data()))
+}
+
 export async function searchQuestionSets(params: {
   q?: string
   regulation?: RegulationId
@@ -210,11 +226,22 @@ export async function incrementQuestionMetric(
   field: 'viewCount' | 'downloadCount' | 'shareCount',
 ): Promise<void> {
   if (!isFirebaseConfigured()) return
+  if (field === 'viewCount' && !reserveQuestionViewSlot(id)) {
+    return
+  }
   const db = getFirebaseDb()
   const ref = doc(db, COLLECTION, id)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) return
-  await updateDoc(ref, { [field]: increment(1), updatedAt: new Date().toISOString() })
+  try {
+    const snap = await getDoc(ref)
+    if (!snap.exists()) {
+      if (field === 'viewCount') releaseQuestionViewSlot(id)
+      return
+    }
+    await updateDoc(ref, { [field]: increment(1), updatedAt: new Date().toISOString() })
+  } catch (err) {
+    if (field === 'viewCount') releaseQuestionViewSlot(id)
+    throw err
+  }
 }
 
 export type AdminQuestionPatch = Partial<
@@ -222,6 +249,9 @@ export type AdminQuestionPatch = Partial<
     QuestionSet,
     | 'status'
     | 'featured'
+    | 'important'
+    | 'popular'
+    | 'showOnHome'
     | 'title'
     | 'subjectName'
     | 'subjectCode'
@@ -280,6 +310,9 @@ export async function adminCreateQuestionSet(input: AdminNewQuestionSetInput): P
     updatedAt: now,
     createdBy: input.createdBy,
     featured: input.featured,
+    important: input.important,
+    popular: input.popular,
+    showOnHome: input.showOnHome,
     downloadCount: input.downloadCount,
     viewCount: input.viewCount,
     shareCount: input.shareCount,

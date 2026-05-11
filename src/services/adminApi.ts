@@ -32,6 +32,7 @@ export const defaultAdminSiteConfig = (): AdminSiteConfig => ({
     'JNTUH unit-wise important questions — search by regulation, branch, and semester. PDFs and study resources.',
   metaKeywords: 'JNTUH, important questions, R18, R22, R24, engineering',
   ogImageUrl: '',
+  homeBranchIds: [],
 })
 
 function readLocalConfig(): AdminSiteConfig {
@@ -39,7 +40,9 @@ function readLocalConfig(): AdminSiteConfig {
     const raw = localStorage.getItem(LS_KEY)
     if (!raw) return defaultAdminSiteConfig()
     const parsed = JSON.parse(raw) as Partial<AdminSiteConfig>
-    return { ...defaultAdminSiteConfig(), ...parsed }
+    const merged = { ...defaultAdminSiteConfig(), ...parsed }
+    if (!Array.isArray(merged.homeBranchIds)) merged.homeBranchIds = []
+    return merged
   } catch {
     return defaultAdminSiteConfig()
   }
@@ -62,6 +65,10 @@ export async function fetchAdminSiteConfig(): Promise<AdminSiteConfig> {
       return initial
     }
     const d = snap.data() as Record<string, unknown>
+    const rawBranches = d.homeBranchIds
+    const homeBranchIds = Array.isArray(rawBranches)
+      ? rawBranches.filter((x): x is string => typeof x === 'string').map((x) => x.toLowerCase())
+      : []
     return {
       ...defaultAdminSiteConfig(),
       siteName: String(d.siteName ?? SITE_NAME),
@@ -70,6 +77,7 @@ export async function fetchAdminSiteConfig(): Promise<AdminSiteConfig> {
       metaDescription: String(d.metaDescription ?? ''),
       metaKeywords: String(d.metaKeywords ?? ''),
       ogImageUrl: String(d.ogImageUrl ?? ''),
+      homeBranchIds,
     }
   } catch {
     return readLocalConfig()
@@ -399,4 +407,34 @@ export async function adminBulkDeleteByBranchRow(row: BranchAggregateRow): Promi
     await adminDeleteQuestionSet(q.id)
   }
   return targets.length
+}
+
+/** Public read for home page (no auth). Empty `homeBranchIds` = show all branches. */
+export async function fetchPublicHomeSettings(): Promise<{ homeBranchIds: string[] }> {
+  if (!isFirebaseConfigured()) {
+    try {
+      const raw = localStorage.getItem(LS_KEY)
+      if (!raw) return { homeBranchIds: [] }
+      const parsed = JSON.parse(raw) as { homeBranchIds?: unknown }
+      const ids = Array.isArray(parsed.homeBranchIds)
+        ? parsed.homeBranchIds.filter((x): x is string => typeof x === 'string').map((x) => x.toLowerCase())
+        : []
+      return { homeBranchIds: ids }
+    } catch {
+      return { homeBranchIds: [] }
+    }
+  }
+  try {
+    const db = getFirebaseDb()
+    const snap = await getDoc(doc(db, SITE_CONFIG, SITE_DOC))
+    if (!snap.exists()) return { homeBranchIds: [] }
+    const d = snap.data() as Record<string, unknown>
+    const raw = d.homeBranchIds
+    if (!Array.isArray(raw)) return { homeBranchIds: [] }
+    return {
+      homeBranchIds: raw.filter((x): x is string => typeof x === 'string').map((x) => x.toLowerCase()),
+    }
+  } catch {
+    return { homeBranchIds: [] }
+  }
 }

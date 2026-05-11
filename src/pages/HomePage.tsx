@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
+import { fetchPublicHomeSettings } from '@/services/adminApi'
 import {
   JsonLdFAQPage,
   JsonLdOrganization,
@@ -8,13 +9,65 @@ import {
 } from '@/components/seo/JsonLd'
 import { SEOHead } from '@/components/seo/SEOHead'
 import { getHomeSeoFaqs } from '@/lib/homeFaqSeo'
-import { REGULATIONS, SITE_NAME } from '@/lib/constants'
+import { BRANCHES, REGULATIONS, SITE_NAME } from '@/lib/constants'
+import { effectiveHomeBranchIds } from '@/lib/homeBranchUtils'
 import { GLOBAL_SEO_KEYWORDS } from '@/lib/seoKeywords'
 import { slugify, unitSegment } from '@/lib/slug'
-import { fetchFeatured } from '@/services/questionsApi'
+import { fetchFeatured, fetchPublishedQuestionSets } from '@/services/questionsApi'
+import type { QuestionSet } from '@/types/models'
 
 function regulationLabel(id: string) {
   return REGULATIONS.find((r) => r.id === id)?.label ?? id.toUpperCase()
+}
+
+function branchLabel(id: string) {
+  return BRANCHES.find((b) => b.id === id)?.label ?? id.toUpperCase()
+}
+
+function homeUnitPath(q: QuestionSet) {
+  return `/${q.regulation}/${q.branch}/${q.semester}/${slugify(q.subjectName)}/${unitSegment(q.unitNumber)}`
+}
+
+function HomeUnitCard({ q }: { q: QuestionSet }) {
+  return (
+    <Link
+      to={homeUnitPath(q)}
+      className="group flex h-full flex-col rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md dark:border-slate-800/90 dark:bg-slate-900/50 dark:hover:border-sky-500/40"
+    >
+      <div className="flex flex-wrap gap-1.5">
+        {q.important ? (
+          <span className="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
+            Important
+          </span>
+        ) : null}
+        {q.popular ? (
+          <span className="rounded-md bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-900 dark:bg-violet-500/20 dark:text-violet-200">
+            Popular
+          </span>
+        ) : null}
+        {q.featured ? (
+          <span className="rounded-md bg-sky-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-900 dark:bg-sky-500/20 dark:text-sky-200">
+            Featured
+          </span>
+        ) : null}
+      </div>
+      <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        {regulationLabel(q.regulation)} · {q.branch.toUpperCase()} · Sem {q.semester}
+      </p>
+      <h3 className="mt-1 text-lg font-semibold text-slate-900 group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300">
+        {q.title}
+      </h3>
+      <p className="mt-2 flex-1 text-sm text-slate-600 dark:text-slate-400">
+        {q.subjectName} <span className="text-slate-400 dark:text-slate-500">({q.subjectCode})</span> · {q.questions.length}{' '}
+        prompts
+      </p>
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-500">
+        <span className="tabular-nums">{q.viewCount.toLocaleString()} views</span>
+        <span className="tabular-nums">{q.downloadCount.toLocaleString()} downloads</span>
+        <span className="ml-auto font-semibold text-sky-600 dark:text-sky-400">Open →</span>
+      </div>
+    </Link>
+  )
 }
 
 function FeaturedSkeleton() {
@@ -42,6 +95,44 @@ export function HomePage() {
     queryKey: ['featured'],
     queryFn: () => fetchFeatured(8),
   })
+
+  const { data: homeSettings } = useQuery({
+    queryKey: ['publicHomeSettings'],
+    queryFn: fetchPublicHomeSettings,
+  })
+
+  const { data: catalog = [], isPending: catalogPending } = useQuery({
+    queryKey: ['homePublishedCatalog'],
+    queryFn: () => fetchPublishedQuestionSets(220),
+  })
+
+  const homeBranchIds = homeSettings?.homeBranchIds ?? []
+  const visibleBranchIds = useMemo(() => effectiveHomeBranchIds(homeBranchIds), [homeBranchIds])
+
+  const topPicks = useMemo(() => {
+    const important = catalog.filter((s) => s.important)
+    const popularOnly = catalog.filter((s) => s.popular && !s.important)
+    const seen = new Set<string>()
+    const out: QuestionSet[] = []
+    for (const s of [...important, ...popularOnly]) {
+      if (seen.has(s.id)) continue
+      seen.add(s.id)
+      out.push(s)
+    }
+    return out.slice(0, 10)
+  }, [catalog])
+
+  const setsByBranch = useMemo(() => {
+    const map = new Map<string, QuestionSet[]>()
+    for (const bid of visibleBranchIds) {
+      const list = catalog
+        .filter((s) => s.branch === bid && s.showOnHome)
+        .sort((a, b) => b.downloadCount - a.downloadCount || b.viewCount - a.viewCount)
+        .slice(0, 10)
+      map.set(bid, list)
+    }
+    return map
+  }, [catalog, visibleBranchIds])
 
   return (
     <>
@@ -141,6 +232,40 @@ export function HomePage() {
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                Top picks
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Important and Popular units (admins choose these in Home layout). Important rows are listed first.
+              </p>
+            </div>
+            <Link
+              to="/search"
+              className="text-sm font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
+            >
+              Browse all →
+            </Link>
+          </div>
+          {catalogPending ? <FeaturedSkeleton /> : null}
+          {!catalogPending && topPicks.length === 0 ? (
+            <p className="mt-6 text-sm text-slate-500 dark:text-slate-400">
+              No Important or Popular units yet. Use Admin → Home layout to flag units, or open search.
+            </p>
+          ) : null}
+          {!catalogPending && topPicks.length > 0 ? (
+            <ul className="mt-6 grid gap-4 md:grid-cols-2">
+              {topPicks.map((q) => (
+                <li key={q.id}>
+                  <HomeUnitCard q={q} />
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </section>
+
+        <section>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
                 Featured sets
               </h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
@@ -187,49 +312,59 @@ export function HomePage() {
             <ul className="mt-6 grid gap-4 md:grid-cols-2">
               {featured.map((q) => (
                 <li key={q.id}>
-                  <Link
-                    to={`/${q.regulation}/${q.branch}/${q.semester}/${slugify(q.subjectName)}/${unitSegment(q.unitNumber)}`}
-                    className="group flex h-full flex-col rounded-2xl border border-slate-200/90 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-sky-200 hover:shadow-md dark:border-slate-800/90 dark:bg-slate-900/50 dark:hover:border-sky-500/40"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {regulationLabel(q.regulation)} · {q.branch.toUpperCase()} · Sem {q.semester}
-                    </p>
-                    <h3 className="mt-2 text-lg font-semibold text-slate-900 group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300">
-                      {q.title}
-                    </h3>
-                    <p className="mt-2 flex-1 text-sm text-slate-600 dark:text-slate-400">
-                      {q.subjectName}{' '}
-                      <span className="text-slate-400 dark:text-slate-500">({q.subjectCode})</span> · {q.questions.length}{' '}
-                      prompts
-                    </p>
-                    <div className="mt-4 flex flex-wrap items-center gap-3 text-xs text-slate-500 dark:text-slate-500">
-                      <span className="inline-flex items-center gap-1">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                          />
-                        </svg>
-                        {q.viewCount.toLocaleString()} views
-                      </span>
-                      <span className="inline-flex items-center gap-1">
-                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                          />
-                        </svg>
-                        {q.downloadCount.toLocaleString()} downloads
-                      </span>
-                      <span className="ml-auto font-semibold text-sky-600 dark:text-sky-400">Open →</span>
-                    </div>
-                  </Link>
+                  <HomeUnitCard q={q} />
                 </li>
               ))}
             </ul>
+          ) : null}
+        </section>
+
+        <section>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                Browse by branch
+              </h2>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                Units marked “on home” for each branch. Admins can hide branches or units from Admin → Home layout.
+              </p>
+            </div>
+          </div>
+          {catalogPending ? <FeaturedSkeleton /> : null}
+          {!catalogPending ? (
+            <div className="mt-8 space-y-10">
+              {visibleBranchIds.map((bid) => {
+                const rows = setsByBranch.get(bid) ?? []
+                return (
+                  <div key={bid}>
+                    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-700">
+                      <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                        {branchLabel(bid)}
+                      </h3>
+                      <Link
+                        to={`/search?branch=${encodeURIComponent(bid)}`}
+                        className="text-sm font-semibold text-sky-700 hover:text-sky-800 dark:text-sky-400 dark:hover:text-sky-300"
+                      >
+                        All {branchLabel(bid)} →
+                      </Link>
+                    </div>
+                    {rows.length === 0 ? (
+                      <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+                        No units on the home page for this branch yet.
+                      </p>
+                    ) : (
+                      <ul className="mt-4 grid gap-4 md:grid-cols-2">
+                        {rows.map((q) => (
+                          <li key={q.id}>
+                            <HomeUnitCard q={q} />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           ) : null}
         </section>
 

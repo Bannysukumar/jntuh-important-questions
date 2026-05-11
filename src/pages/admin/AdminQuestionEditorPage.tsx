@@ -33,6 +33,9 @@ function emptyQuestionSet(): QuestionSet {
     createdAt: '',
     updatedAt: '',
     featured: false,
+    important: false,
+    popular: false,
+    showOnHome: true,
     downloadCount: 0,
     viewCount: 0,
     shareCount: 0,
@@ -109,6 +112,9 @@ function QuestionEditorForm({
           keywords,
           pdfUrl: form.pdfUrl?.trim() || undefined,
           featured: form.featured,
+          important: form.important,
+          popular: form.popular,
+          showOnHome: form.showOnHome,
           status: form.status,
           downloadCount: 0,
           viewCount: 0,
@@ -117,6 +123,8 @@ function QuestionEditorForm({
         })
         await qc.invalidateQueries({ queryKey: ['admin', 'questionSets'] })
         await qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+        await qc.invalidateQueries({ queryKey: ['homePublishedCatalog'] })
+        await qc.invalidateQueries({ queryKey: ['featured'] })
         navigate(`/admin/questions/${newId}/edit`)
         return
       }
@@ -132,6 +140,8 @@ function QuestionEditorForm({
       await qc.invalidateQueries({ queryKey: ['admin', 'questionSets'] })
       await qc.invalidateQueries({ queryKey: ['admin', 'question', form.id] })
       await qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+      await qc.invalidateQueries({ queryKey: ['homePublishedCatalog'] })
+      await qc.invalidateQueries({ queryKey: ['featured'] })
     },
   })
 
@@ -349,15 +359,44 @@ function QuestionEditorForm({
                 ))}
               </select>
             </label>
-            <label className="flex cursor-pointer items-center gap-2 pt-6 text-sm text-slate-300">
-              <input
-                type="checkbox"
-                checked={form.featured}
-                onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))}
-                className="rounded border-white/20 bg-slate-950"
-              />
-              Featured on home
-            </label>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 pt-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.showOnHome}
+                  onChange={(e) => setForm((f) => ({ ...f, showOnHome: e.target.checked }))}
+                  className="rounded border-white/20 bg-slate-950"
+                />
+                Show on home (branch list)
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.important}
+                  onChange={(e) => setForm((f) => ({ ...f, important: e.target.checked }))}
+                  className="rounded border-white/20 bg-slate-950"
+                />
+                Important (top picks)
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.popular}
+                  onChange={(e) => setForm((f) => ({ ...f, popular: e.target.checked }))}
+                  className="rounded border-white/20 bg-slate-950"
+                />
+                Popular (top picks)
+              </label>
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-300">
+                <input
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={(e) => setForm((f) => ({ ...f, featured: e.target.checked }))}
+                  className="rounded border-white/20 bg-slate-950"
+                />
+                Featured on home
+              </label>
+            </div>
           </div>
           {mode === 'edit' ? (
             <div className="grid grid-cols-3 gap-2 text-xs">

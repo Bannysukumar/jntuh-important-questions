@@ -21,6 +21,12 @@ export interface QuestionSet {
   updatedAt: string
   createdBy?: string
   featured: boolean
+  /** Shown in “Top picks” on home when enabled. */
+  important: boolean
+  /** Shown in “Top picks” on home when enabled. */
+  popular: boolean
+  /** Listed under “Browse by branch” on home; default true when missing in Firestore. */
+  showOnHome: boolean
   downloadCount: number
   viewCount: number
   shareCount: number
@@ -93,6 +99,11 @@ export interface AdminSiteConfig extends SiteSettings {
   metaDescription: string
   metaKeywords: string
   ogImageUrl: string
+  /**
+   * Branch ids (lowercase) shown in “Browse by branch” on the home page.
+   * Empty array means all branches from `BRANCHES` in constants.
+   */
+  homeBranchIds: string[]
 }
 
 /** Student feedback at `feedback/{id}`. Readable only by admins. */

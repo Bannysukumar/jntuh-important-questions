@@ -37,7 +37,11 @@ export function AdminQuestionsPage() {
   const patchMut = useMutation({
     mutationFn: ({ id, patch }: { id: string; patch: AdminQuestionPatch }) =>
       adminPatchQuestionSet(id, patch),
-    onSuccess: () => void qc.invalidateQueries({ queryKey: ['admin', 'questionSets'] }),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'questionSets'] })
+      void qc.invalidateQueries({ queryKey: ['homePublishedCatalog'] })
+      void qc.invalidateQueries({ queryKey: ['featured'] })
+    },
   })
 
   const delMut = useMutation({
@@ -45,6 +49,8 @@ export function AdminQuestionsPage() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ['admin', 'questionSets'] })
       void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+      void qc.invalidateQueries({ queryKey: ['homePublishedCatalog'] })
+      void qc.invalidateQueries({ queryKey: ['featured'] })
     },
   })
 
@@ -77,13 +83,16 @@ export function AdminQuestionsPage() {
       ) : (
         <div className="overflow-hidden rounded-2xl border border-white/10 bg-slate-900/40 shadow-xl shadow-black/20">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-left text-sm">
+            <table className="w-full min-w-[1100px] text-left text-sm">
               <thead>
                 <tr className="border-b border-white/10 bg-white/5 text-xs uppercase tracking-wide text-slate-500">
                   <th className="px-4 py-3 font-semibold">Unit</th>
                   <th className="px-4 py-3 font-semibold">Route</th>
                   <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Featured</th>
+                  <th className="px-4 py-3 font-semibold">Home</th>
+                  <th className="px-4 py-3 font-semibold">Imp.</th>
+                  <th className="px-4 py-3 font-semibold">Pop.</th>
+                  <th className="px-4 py-3 font-semibold">Feat.</th>
                   <th className="px-4 py-3 font-semibold tabular-nums">Views</th>
                   <th className="px-4 py-3 font-semibold">Actions</th>
                 </tr>
@@ -152,16 +161,44 @@ function QuestionRow({
         </select>
       </td>
       <td className="px-4 py-3">
-        <label className="inline-flex cursor-pointer items-center gap-2 text-xs text-slate-400">
-          <input
-            type="checkbox"
-            checked={row.featured}
-            disabled={busy}
-            onChange={(e) => onPatch({ featured: e.target.checked })}
-            className="rounded border-white/20 bg-slate-950 text-cyan-500 focus:ring-cyan-500/40"
-          />
-          Home
-        </label>
+        <input
+          type="checkbox"
+          checked={row.showOnHome}
+          disabled={busy}
+          title="Show in Browse by branch on home"
+          onChange={(e) => onPatch({ showOnHome: e.target.checked })}
+          className="rounded border-white/20 bg-slate-950 text-cyan-500 focus:ring-cyan-500/40"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <input
+          type="checkbox"
+          checked={row.important}
+          disabled={busy}
+          title="Important (top picks)"
+          onChange={(e) => onPatch({ important: e.target.checked })}
+          className="rounded border-white/20 bg-slate-950 text-amber-500 focus:ring-amber-500/40"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <input
+          type="checkbox"
+          checked={row.popular}
+          disabled={busy}
+          title="Popular (top picks)"
+          onChange={(e) => onPatch({ popular: e.target.checked })}
+          className="rounded border-white/20 bg-slate-950 text-violet-500 focus:ring-violet-500/40"
+        />
+      </td>
+      <td className="px-4 py-3">
+        <input
+          type="checkbox"
+          checked={row.featured}
+          disabled={busy}
+          title="Featured section"
+          onChange={(e) => onPatch({ featured: e.target.checked })}
+          className="rounded border-white/20 bg-slate-950 text-sky-500 focus:ring-cyan-500/40"
+        />
       </td>
       <td className="px-4 py-3 tabular-nums text-slate-300">{row.viewCount.toLocaleString()}</td>
       <td className="px-4 py-3">
