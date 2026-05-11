@@ -17,7 +17,7 @@ function formatDate(iso: string) {
 
 export function AdminFeedbackPage() {
   const qc = useQueryClient()
-  const { data: items = [], isLoading, isError } = useQuery({
+  const { data: items = [], isLoading, isError, error } = useQuery({
     queryKey: ['admin', 'feedback'],
     queryFn: () => adminListFeedback(300),
   })
@@ -38,7 +38,17 @@ export function AdminFeedbackPage() {
 
       {isLoading ? <p className="text-sm text-slate-500">Loading…</p> : null}
       {isError ? (
-        <p className="text-sm text-rose-400">Could not load feedback. Check Firestore rules and deploy.</p>
+        <div className="rounded-xl border border-rose-500/30 bg-rose-950/40 px-4 py-3 text-sm text-rose-100">
+          <p className="font-semibold text-rose-200">Could not load feedback</p>
+          <p className="mt-1 text-rose-100/90">
+            {error instanceof Error ? error.message : 'Unknown error'}. Deploy updated rules:{' '}
+            <code className="rounded bg-black/30 px-1.5 py-0.5 text-xs">firebase deploy --only firestore:rules</code>
+          </p>
+          <p className="mt-2 text-xs text-rose-200/80">
+            Firestore must treat you as admin: document <code className="rounded bg-black/30 px-1">admins/&lt;your-uid&gt;</code>{' '}
+            or <code className="rounded bg-black/30 px-1">users/&lt;your-uid&gt;.role</code> = &quot;admin&quot; (any casing).
+          </p>
+        </div>
       ) : null}
 
       {!isLoading && !isError && items.length === 0 ? (

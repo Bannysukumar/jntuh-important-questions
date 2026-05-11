@@ -5,12 +5,13 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Must match client-side AuthContext (any casing of the word "admin").
+    // RE2: no (?i) flag required — match "admin" case-insensitively.
     function userProfileRoleIsAdmin() {
       let path = /databases/$(database)/documents/users/$(request.auth.uid);
-      return exists(path) && (
-        get(path).data.role == 'admin'
-        || get(path).data.role == 'ADMIN'
-      );
+      return exists(path)
+        && get(path).data.role is string
+        && get(path).data.role.matches('^[aA][dD][mM][iI][nN]$');
     }
 
     // Dashboard + elevated Firestore access: `admins/{uid}` OR `users/{uid}.role` (Console / trusted writes).
