@@ -10,8 +10,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // favicon.png is linked from index.html but not precached (can exceed Workbox 2 MiB default).
       includeAssets: [
-        'favicon.png',
         'robots.txt',
         'sitemap.xml',
         'sitemap-static.xml',
@@ -42,6 +42,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,txt,xml}'],
+        globIgnores: ['**/favicon.png'],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
