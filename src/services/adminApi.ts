@@ -9,7 +9,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore'
-import { SITE_NAME } from '@/lib/constants'
+import { DEFAULT_REGULATIONS, SITE_NAME } from '@/lib/constants'
 import { getFirebaseDb, isFirebaseConfigured } from '@/services/firebase/config'
 import { adminFetchAllComments } from '@/services/commentsApi'
 import {
@@ -17,12 +17,38 @@ import {
   adminListAllQuestionSets,
   adminSaveQuestionSet,
 } from '@/services/questionsApi'
-import type { AdminSiteConfig, QuestionSet, RegulationId, UserDegree, UserProfile, UserRole } from '@/types/models'
+import type {
+  AdminSiteConfig,
+  QuestionSet,
+  RegulationEntry,
+  RegulationId,
+  UserDegree,
+  UserProfile,
+  UserRole,
+} from '@/types/models'
 
 const USERS = 'users'
 const SITE_CONFIG = 'siteConfig'
 const SITE_DOC = 'public'
 const LS_KEY = 'jntuh-admin-site-config-v1'
+
+function parseRegulationsField(raw: unknown): RegulationEntry[] {
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return DEFAULT_REGULATIONS.map((r) => ({ ...r }))
+  }
+  const out: RegulationEntry[] = []
+  for (const item of raw) {
+    if (!item || typeof item !== 'object') continue
+    const o = item as Record<string, unknown>
+    const idRaw = typeof o.id === 'string' ? o.id.trim().toLowerCase().replace(/\s+/g, '') : ''
+    const label = typeof o.label === 'string' ? o.label.trim() : ''
+    if (!idRaw || !label) continue
+    if (!/^r[a-z0-9]{1,15}$/.test(idRaw)) continue
+    if (out.some((x) => x.id === idRaw)) continue
+    out.push({ id: idRaw, label })
+  }
+  return out.length > 0 ? out : DEFAULT_REGULATIONS.map((r) => ({ ...r }))
+}
 
 export const defaultAdminSiteConfig = (): AdminSiteConfig => ({
   siteName: SITE_NAME,
@@ -33,6 +59,7 @@ export const defaultAdminSiteConfig = (): AdminSiteConfig => ({
   metaKeywords: 'JNTUH, important questions, R18, R22, R24, engineering',
   ogImageUrl: '',
   homeBranchIds: [],
+  regulations: DEFAULT_REGULATIONS.map((r) => ({ ...r })),
 })
 
 function readLocalConfig(): AdminSiteConfig {
@@ -42,6 +69,7 @@ function readLocalConfig(): AdminSiteConfig {
     const parsed = JSON.parse(raw) as Partial<AdminSiteConfig>
     const merged = { ...defaultAdminSiteConfig(), ...parsed }
     if (!Array.isArray(merged.homeBranchIds)) merged.homeBranchIds = []
+    merged.regulations = parseRegulationsField(merged.regulations)
     return merged
   } catch {
     return defaultAdminSiteConfig()
@@ -78,6 +106,7 @@ export async function fetchAdminSiteConfig(): Promise<AdminSiteConfig> {
       metaKeywords: String(d.metaKeywords ?? ''),
       ogImageUrl: String(d.ogImageUrl ?? ''),
       homeBranchIds,
+      regulations: parseRegulationsField(d.regulations),
     }
   } catch {
     return readLocalConfig()
@@ -436,5 +465,21 @@ export async function fetchPublicHomeSettings(): Promise<{ homeBranchIds: string
     }
   } catch {
     return { homeBranchIds: [] }
+  }
+}
+
+/** Public read for search bar & labels (no auth). */
+export async function fetchPublicRegulations(): Promise<RegulationEntry[]> {
+  if (!isFirebaseConfigured()) {
+    return parseRegulationsField(readLocalConfig().regulations)
+  }
+  try {
+    const db = getFirebaseDb()
+    const snap = await getDoc(doc(db, SITE_CONFIG, SITE_DOC))
+    if (!snap.exists()) return DEFAULT_REGULATIONS.map((r) => ({ ...r }))
+    const d = snap.data() as Record<string, unknown>
+    return parseRegulationsField(d.regulations)
+  } catch {
+    return DEFAULT_REGULATIONS.map((r) => ({ ...r }))
   }
 }

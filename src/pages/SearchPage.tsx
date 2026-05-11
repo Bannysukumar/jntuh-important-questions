@@ -11,7 +11,10 @@ import { searchQuestionSets } from '@/services/questionsApi'
 export function SearchPage() {
   const [params] = useSearchParams()
   const q = params.get('q') ?? ''
-  const regulation = (params.get('regulation') as RegulationId | null) ?? undefined
+  const regulationParam = params.get('regulation')
+  const regulation = regulationParam
+    ? (regulationParam.toLowerCase() as RegulationId)
+    : undefined
   const branch = params.get('branch') ?? undefined
   const semester = params.get('semester') ?? undefined
   const tracked = useRef<string>('')

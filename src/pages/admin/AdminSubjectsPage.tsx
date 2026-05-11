@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AdminModal } from '@/components/admin/AdminModal'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { useRegulations } from '@/hooks/useRegulations'
+import { DEFAULT_REGULATIONS } from '@/lib/constants'
 import {
   adminBulkDeleteBySubjectRow,
   adminBulkPatchBySubjectRow,
@@ -11,17 +13,18 @@ import {
 } from '@/services/adminApi'
 import type { RegulationId } from '@/types/models'
 
-const REGS: RegulationId[] = ['r18', 'r22', 'r24']
+const DEFAULT_REG_ID = (DEFAULT_REGULATIONS.find((x) => x.id === 'r22') ?? DEFAULT_REGULATIONS[0])!.id as RegulationId
 
 export function AdminSubjectsPage() {
   const qc = useQueryClient()
+  const { regulations } = useRegulations()
   const [editRow, setEditRow] = useState<SubjectAggregateRow | null>(null)
   const [form, setForm] = useState({
     subjectName: '',
     subjectCode: '',
     semester: '',
     branch: '',
-    regulation: 'r22' as RegulationId,
+    regulation: DEFAULT_REG_ID,
   })
 
   const { data: rows = [], isLoading } = useQuery({
@@ -224,9 +227,9 @@ export function AdminSubjectsPage() {
                 }
                 className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
               >
-                {REGS.map((x) => (
-                  <option key={x} value={x}>
-                    {x.toUpperCase()}
+                {regulations.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.label}
                   </option>
                 ))}
               </select>

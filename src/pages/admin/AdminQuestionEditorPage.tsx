@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
+import { useRegulations } from '@/hooks/useRegulations'
+import { DEFAULT_REGULATIONS } from '@/lib/constants'
 import { questionSetPublicPath } from '@/lib/adminPaths'
 import { unitPageKeywords } from '@/lib/seoKeywords'
 import {
@@ -12,7 +14,6 @@ import {
 } from '@/services/questionsApi'
 import type { QuestionSet, QuestionStatus, RegulationId } from '@/types/models'
 
-const REGS: RegulationId[] = ['r18', 'r22', 'r24']
 const STATUSES: QuestionStatus[] = ['draft', 'published', 'archived']
 
 function emptyQuestionSet(): QuestionSet {
@@ -20,7 +21,7 @@ function emptyQuestionSet(): QuestionSet {
     id: '',
     title: '',
     slug: '',
-    regulation: 'r22',
+    regulation: DEFAULT_REGULATIONS.find((x) => x.id === 'r22')?.id ?? DEFAULT_REGULATIONS[0]?.id ?? 'r22',
     branch: '',
     year: '2nd',
     semester: '',
@@ -43,9 +44,9 @@ function emptyQuestionSet(): QuestionSet {
   }
 }
 
-function applySearchPrefill(base: QuestionSet, sp: Record<string, string>): QuestionSet {
-  const r = sp.regulation
-  if (r && (REGS as string[]).includes(r)) base.regulation = r as RegulationId
+function applySearchPrefill(base: QuestionSet, sp: Record<string, string>, validRegIds: string[]): QuestionSet {
+  const r = sp.regulation?.toLowerCase()
+  if (r && validRegIds.includes(r)) base.regulation = r as RegulationId
   if (sp.branch) base.branch = sp.branch
   if (sp.semester) base.semester = sp.semester
   if (sp.subjectName) base.subjectName = decodeURIComponent(sp.subjectName)
@@ -64,10 +65,12 @@ function QuestionEditorForm({
 }) {
   const navigate = useNavigate()
   const qc = useQueryClient()
+  const { regulations } = useRegulations()
+  const regIds = useMemo(() => regulations.map((r) => r.id), [regulations])
 
   const [form, setForm] = useState<QuestionSet>(() => {
     if (initial) return { ...initial }
-    return applySearchPrefill(emptyQuestionSet(), searchPrefill)
+    return applySearchPrefill(emptyQuestionSet(), searchPrefill, DEFAULT_REGULATIONS.map((r) => r.id))
   })
 
   const [questionsText, setQuestionsText] = useState(() =>
@@ -75,6 +78,12 @@ function QuestionEditorForm({
   )
   const [tagsStr, setTagsStr] = useState(() => (initial?.tags ?? []).join(', '))
   const [keywordsStr, setKeywordsStr] = useState(() => (initial?.keywords ?? []).join(', '))
+
+  useEffect(() => {
+    if (regIds.length && !regIds.includes(form.regulation)) {
+      setForm((f) => ({ ...f, regulation: (regIds[0] ?? 'r22') as RegulationId }))
+    }
+  }, [regIds, form.regulation])
 
   const slugPreview = useMemo(
     () => computeQuestionSlug(form.subjectName || 'subject', Number(form.unitNumber) || 1),
@@ -205,9 +214,9 @@ function QuestionEditorForm({
               }
               className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
             >
-              {REGS.map((r) => (
-                <option key={r} value={r}>
-                  {r.toUpperCase()}
+              {regulations.map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
                 </option>
               ))}
             </select>

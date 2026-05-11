@@ -1,4 +1,10 @@
-export type RegulationId = 'r18' | 'r22' | 'r24'
+/** Lowercase slug in URLs (e.g. r18, r22, r25). Managed under Admin → Regulations. */
+export type RegulationId = string
+
+export interface RegulationEntry {
+  id: RegulationId
+  label: string
+}
 
 export type QuestionStatus = 'draft' | 'published' | 'archived'
 
@@ -104,6 +110,8 @@ export interface AdminSiteConfig extends SiteSettings {
    * Empty array means all branches from `BRANCHES` in constants.
    */
   homeBranchIds: string[]
+  /** Curriculum regulations (R18, R22, R25, …). Order = display order in filters. */
+  regulations: RegulationEntry[]
 }
 
 /** Student feedback at `feedback/{id}`. Readable only by admins. */

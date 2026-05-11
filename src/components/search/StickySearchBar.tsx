@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { BRANCHES, REGULATIONS, SEMESTERS } from '../../lib/constants'
+import { BRANCHES, SEMESTERS } from '../../lib/constants'
+import { useRegulations } from '@/hooks/useRegulations'
 import { useSearchFilters } from '../../hooks/useSearchFilters'
 
 const POPULAR = [
@@ -15,6 +16,7 @@ const POPULAR = [
 export function StickySearchBar() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { regulations } = useRegulations()
   const { regulation, branch, semester, setRegulation, setBranch, setSemester } = useSearchFilters()
   const [q, setQ] = useState('')
 
@@ -77,7 +79,7 @@ export function StickySearchBar() {
                 className="h-10 w-full cursor-pointer rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none ring-sky-500/15 focus:border-sky-400 focus:ring-4 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-500"
               >
                 <option value="">Any regulation</option>
-                {REGULATIONS.map((r) => (
+                {regulations.map((r) => (
                   <option key={r.id} value={r.id}>
                     {r.label}
                   </option>

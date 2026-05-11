@@ -9,15 +9,16 @@ import {
 } from '@/components/seo/JsonLd'
 import { SEOHead } from '@/components/seo/SEOHead'
 import { getHomeSeoFaqs } from '@/lib/homeFaqSeo'
-import { BRANCHES, REGULATIONS, SITE_NAME } from '@/lib/constants'
+import { BRANCHES, SITE_NAME } from '@/lib/constants'
+import { useRegulations } from '@/hooks/useRegulations'
 import { effectiveHomeBranchIds } from '@/lib/homeBranchUtils'
 import { GLOBAL_SEO_KEYWORDS } from '@/lib/seoKeywords'
 import { slugify, unitSegment } from '@/lib/slug'
 import { fetchFeatured, fetchPublishedQuestionSets } from '@/services/questionsApi'
 import type { QuestionSet } from '@/types/models'
 
-function regulationLabel(id: string) {
-  return REGULATIONS.find((r) => r.id === id)?.label ?? id.toUpperCase()
+function regulationLabel(id: string, list: { id: string; label: string }[]) {
+  return list.find((r) => r.id === id)?.label ?? id.toUpperCase()
 }
 
 function branchLabel(id: string) {
@@ -28,7 +29,13 @@ function homeUnitPath(q: QuestionSet) {
   return `/${q.regulation}/${q.branch}/${q.semester}/${slugify(q.subjectName)}/${unitSegment(q.unitNumber)}`
 }
 
-function HomeUnitCard({ q }: { q: QuestionSet }) {
+function HomeUnitCard({
+  q,
+  regulations,
+}: {
+  q: QuestionSet
+  regulations: { id: string; label: string }[]
+}) {
   return (
     <Link
       to={homeUnitPath(q)}
@@ -52,7 +59,7 @@ function HomeUnitCard({ q }: { q: QuestionSet }) {
         ) : null}
       </div>
       <p className="mt-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-        {regulationLabel(q.regulation)} · {q.branch.toUpperCase()} · Sem {q.semester}
+        {regulationLabel(q.regulation, regulations)} · {q.branch.toUpperCase()} · Sem {q.semester}
       </p>
       <h3 className="mt-1 text-lg font-semibold text-slate-900 group-hover:text-sky-700 dark:text-white dark:group-hover:text-sky-300">
         {q.title}
@@ -90,6 +97,7 @@ function FeaturedSkeleton() {
 
 export function HomePage() {
   const homeFaqs = useMemo(() => getHomeSeoFaqs(), [])
+  const { regulations } = useRegulations()
 
   const { data: featured = [], isPending, isError } = useQuery({
     queryKey: ['featured'],
@@ -255,7 +263,7 @@ export function HomePage() {
             <ul className="mt-6 grid gap-4 md:grid-cols-2">
               {topPicks.map((q) => (
                 <li key={q.id}>
-                  <HomeUnitCard q={q} />
+                  <HomeUnitCard q={q} regulations={regulations} />
                 </li>
               ))}
             </ul>
@@ -312,7 +320,7 @@ export function HomePage() {
             <ul className="mt-6 grid gap-4 md:grid-cols-2">
               {featured.map((q) => (
                 <li key={q.id}>
-                  <HomeUnitCard q={q} />
+                  <HomeUnitCard q={q} regulations={regulations} />
                 </li>
               ))}
             </ul>
@@ -356,7 +364,7 @@ export function HomePage() {
                       <ul className="mt-4 grid gap-4 md:grid-cols-2">
                         {rows.map((q) => (
                           <li key={q.id}>
-                            <HomeUnitCard q={q} />
+                            <HomeUnitCard q={q} regulations={regulations} />
                           </li>
                         ))}
                       </ul>

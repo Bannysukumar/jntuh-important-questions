@@ -1,4 +1,4 @@
-import type { RegulationId } from '@/types/models'
+import type { RegulationEntry } from '@/types/models'
 import { defaultWatermarkHost, SITE_URL } from '@/lib/siteUrl'
 
 export const SITE_NAME = 'JNTUH Important Questions'
@@ -6,11 +6,15 @@ export { SITE_URL }
 /** Hostname for PDF watermark — derived from `SITE_URL` unless overridden in PDF generator */
 export const WATERMARK_DEFAULT = defaultWatermarkHost()
 
-export const REGULATIONS: { id: RegulationId; label: string }[] = [
+/** Default list until Firestore `siteConfig/public.regulations` is set. */
+export const DEFAULT_REGULATIONS: RegulationEntry[] = [
   { id: 'r18', label: 'R18' },
   { id: 'r22', label: 'R22' },
   { id: 'r24', label: 'R24' },
 ]
+
+/** @deprecated Use `useRegulations()` or `fetchPublicRegulations()` for the live list. */
+export const REGULATIONS = DEFAULT_REGULATIONS
 
 export const BRANCHES = [
   { id: 'cse', label: 'CSE' },

@@ -24,7 +24,7 @@ function mapDoc(id: string, data: Record<string, unknown>): QuestionSet {
     id,
     title: String(data.title ?? ''),
     slug: String(data.slug ?? ''),
-    regulation: data.regulation as RegulationId,
+    regulation: String(data.regulation ?? 'r22').toLowerCase() as RegulationId,
     branch: String(data.branch ?? ''),
     year: String(data.year ?? ''),
     semester: String(data.semester ?? ''),
@@ -56,7 +56,7 @@ function mockFindByPath(
   subjectSlug: string,
   unitNum: number,
 ): QuestionSet | null {
-  const reg = regulation.toLowerCase() as RegulationId
+  const reg = regulation.toLowerCase()
   return (
     SAMPLE_QUESTION_SETS.find(
       (q) =>
