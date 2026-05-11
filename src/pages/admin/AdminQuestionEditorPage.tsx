@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { useRegulations } from '@/hooks/useRegulations'
@@ -19,6 +19,41 @@ const STATUSES: QuestionStatus[] = ['draft', 'published', 'archived']
 const SEMESTER_OPTIONS = SEMESTERS as readonly string[]
 const YEAR_OPTIONS = YEARS as readonly string[]
 const BRANCH_IDS: string[] = BRANCHES.map((b) => b.id)
+
+/** Leading list marker like `12. ` or `3) ` (requires whitespace after marker so lines like `2.0 GHz` stay intact). */
+const LEADING_QUESTION_SERIAL = /^\s*\d+[\.\)]\s+/
+
+function stripLeadingQuestionSerial(line: string): string {
+  return line.replace(LEADING_QUESTION_SERIAL, '')
+}
+
+/** Non-empty lines become `1. …`, `2. …`; blank lines preserved. Existing leading serials are replaced. */
+function applyQuestionSerials(raw: string): string {
+  const lines = raw.split('\n')
+  let n = 1
+  const out: string[] = []
+  for (const line of lines) {
+    if (line.trim() === '') {
+      out.push('')
+      continue
+    }
+    const body = stripLeadingQuestionSerial(line).trim()
+    if (body === '') {
+      out.push('')
+    } else {
+      out.push(`${n}. ${body}`)
+      n += 1
+    }
+  }
+  return out.join('\n')
+}
+
+function normalizeQuestionsForSave(text: string): string[] {
+  return text
+    .split('\n')
+    .map((s) => stripLeadingQuestionSerial(s).trim())
+    .filter(Boolean)
+}
 
 function emptyQuestionSet(): QuestionSet {
   return {
@@ -77,8 +112,10 @@ function QuestionEditorForm({
     return applySearchPrefill(emptyQuestionSet(), searchPrefill, DEFAULT_REGULATIONS.map((r) => r.id))
   })
 
+  const questionsTextareaRef = useRef<HTMLTextAreaElement>(null)
+
   const [questionsText, setQuestionsText] = useState(() =>
-    (initial?.questions ?? []).join('\n'),
+    applyQuestionSerials((initial?.questions ?? []).join('\n')),
   )
   const [tagsStr, setTagsStr] = useState(() => (initial?.tags ?? []).join(', '))
   const [keywordsStr, setKeywordsStr] = useState(() => (initial?.keywords ?? []).join(', '))
@@ -104,10 +141,7 @@ function QuestionEditorForm({
 
   const saveMut = useMutation({
     mutationFn: async () => {
-      const questions = questionsText
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean)
+      const questions = normalizeQuestionsForSave(questionsText)
       const tags = tagsStr
         .split(',')
         .map((s) => s.trim())
@@ -338,11 +372,33 @@ function QuestionEditorForm({
           <label className="block">
             <span className="text-xs text-slate-500">Questions (one per line)</span>
             <textarea
+              ref={questionsTextareaRef}
               value={questionsText}
               onChange={(e) => setQuestionsText(e.target.value)}
+              onPaste={(e) => {
+                const el = e.currentTarget
+                const start = el.selectionStart
+                const end = el.selectionEnd
+                const paste = e.clipboardData.getData('text/plain')
+                e.preventDefault()
+                const merged = el.value.slice(0, start) + paste + el.value.slice(end)
+                const numbered = applyQuestionSerials(merged)
+                setQuestionsText(numbered)
+                requestAnimationFrame(() => {
+                  const node = questionsTextareaRef.current
+                  if (!node) return
+                  const pos = numbered.length
+                  node.focus()
+                  node.setSelectionRange(pos, pos)
+                })
+              }}
+              onBlur={() => setQuestionsText((t) => applyQuestionSerials(t))}
               rows={14}
               className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 font-mono text-sm text-white"
             />
+            <p className="mt-1 text-[11px] text-slate-500">
+              Paste or leave this field to number lines as 1. 2. 3. … Those prefixes are stripped on save so the public page keeps a single ordered list.
+            </p>
           </label>
           <label className="block">
             <span className="text-xs text-slate-500">Tags (comma-separated)</span>
