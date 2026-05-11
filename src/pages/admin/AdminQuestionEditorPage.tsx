@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { useRegulations } from '@/hooks/useRegulations'
-import { DEFAULT_REGULATIONS } from '@/lib/constants'
+import { BRANCHES, DEFAULT_REGULATIONS, SEMESTERS, YEARS } from '@/lib/constants'
 import { questionSetPublicPath } from '@/lib/adminPaths'
 import { unitPageKeywords } from '@/lib/seoKeywords'
 import {
@@ -15,6 +15,10 @@ import {
 import type { QuestionSet, QuestionStatus, RegulationId } from '@/types/models'
 
 const STATUSES: QuestionStatus[] = ['draft', 'published', 'archived']
+
+const SEMESTER_OPTIONS = SEMESTERS as readonly string[]
+const YEAR_OPTIONS = YEARS as readonly string[]
+const BRANCH_IDS: string[] = BRANCHES.map((b) => b.id)
 
 function emptyQuestionSet(): QuestionSet {
   return {
@@ -89,6 +93,14 @@ function QuestionEditorForm({
     () => computeQuestionSlug(form.subjectName || 'subject', Number(form.unitNumber) || 1),
     [form.subjectName, form.unitNumber],
   )
+
+  const branchTrim = form.branch.trim()
+  const branchSelectValue = BRANCH_IDS.includes(branchTrim.toLowerCase())
+    ? branchTrim.toLowerCase()
+    : branchTrim
+
+  const semTrim = form.semester.trim()
+  const yearTrim = form.year.trim()
 
   const saveMut = useMutation({
     mutationFn: async () => {
@@ -223,27 +235,57 @@ function QuestionEditorForm({
           </label>
           <label className="block">
             <span className="text-xs text-slate-500">Branch code (e.g. ece, cse)</span>
-            <input
-              value={form.branch}
+            <select
+              value={branchSelectValue}
               onChange={(e) => setForm((f) => ({ ...f, branch: e.target.value }))}
               className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
-            />
+            >
+              <option value="">Select branch…</option>
+              {BRANCHES.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.label} ({b.id})
+                </option>
+              ))}
+              {branchTrim && !BRANCH_IDS.includes(branchTrim.toLowerCase()) ? (
+                <option value={branchTrim}>{branchTrim} (custom)</option>
+              ) : null}
+            </select>
           </label>
           <label className="block">
             <span className="text-xs text-slate-500">Semester (e.g. 2-1)</span>
-            <input
-              value={form.semester}
+            <select
+              value={semTrim}
               onChange={(e) => setForm((f) => ({ ...f, semester: e.target.value }))}
               className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
-            />
+            >
+              <option value="">Select semester…</option>
+              {SEMESTER_OPTIONS.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+              {semTrim && !SEMESTER_OPTIONS.includes(semTrim) ? (
+                <option value={semTrim}>{semTrim} (custom)</option>
+              ) : null}
+            </select>
           </label>
           <label className="block">
             <span className="text-xs text-slate-500">Year label</span>
-            <input
-              value={form.year}
+            <select
+              value={yearTrim}
               onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
               className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
-            />
+            >
+              <option value="">Select year…</option>
+              {YEAR_OPTIONS.map((y) => (
+                <option key={y} value={y}>
+                  {y}
+                </option>
+              ))}
+              {yearTrim && !YEAR_OPTIONS.includes(yearTrim) ? (
+                <option value={yearTrim}>{yearTrim} (custom)</option>
+              ) : null}
+            </select>
           </label>
           <label className="block">
             <span className="text-xs text-slate-500">Subject name</span>
