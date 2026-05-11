@@ -10,7 +10,14 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.svg', 'robots.txt', 'sitemap.xml'],
+      includeAssets: [
+        'favicon.svg',
+        'robots.txt',
+        'sitemap.xml',
+        'sitemap-static.xml',
+        'sitemap-subjects.xml',
+        'sitemap-blog.xml',
+      ],
       manifest: {
         name: 'JNTUH Important Questions',
         short_name: 'JNTUH IQ',

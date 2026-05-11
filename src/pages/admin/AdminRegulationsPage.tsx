@@ -27,7 +27,8 @@ export function AdminRegulationsPage() {
 
   useEffect(() => {
     if (!config) return
-    setRows(config.regulations.map((r) => ({ ...r })))
+    const next = config.regulations.map((r) => ({ ...r }))
+    queueMicrotask(() => setRows(next))
   }, [config, dataUpdatedAt])
 
   const save = useMutation({

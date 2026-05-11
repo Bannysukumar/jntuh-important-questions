@@ -10,6 +10,16 @@ import {
 import { SEOHead } from '@/components/seo/SEOHead'
 import { getHomeSeoFaqs } from '@/lib/homeFaqSeo'
 import { BRANCHES, SITE_NAME } from '@/lib/constants'
+import {
+  HOME_CTA_PRIMARY_LABEL,
+  HOME_CTA_SECONDARY_LABEL,
+  HOME_HERO_HEADLINE,
+  HOME_HERO_SUB,
+  HOME_VALUE_SECTION_BODY,
+  HOME_VALUE_SECTION_TITLE,
+  META_DESCRIPTION_DEFAULT,
+  TRUST_BADGES,
+} from '@/lib/siteMessaging'
 import { useRegulations } from '@/hooks/useRegulations'
 import { effectiveHomeBranchIds } from '@/lib/homeBranchUtils'
 import { GLOBAL_SEO_KEYWORDS } from '@/lib/seoKeywords'
@@ -114,8 +124,10 @@ export function HomePage() {
     queryFn: () => fetchPublishedQuestionSets(220),
   })
 
-  const homeBranchIds = homeSettings?.homeBranchIds ?? []
-  const visibleBranchIds = useMemo(() => effectiveHomeBranchIds(homeBranchIds), [homeBranchIds])
+  const visibleBranchIds = useMemo(() => {
+    const homeBranchIds = homeSettings?.homeBranchIds ?? []
+    return effectiveHomeBranchIds(homeBranchIds)
+  }, [homeSettings])
 
   const topPicks = useMemo(() => {
     const important = catalog.filter((s) => s.important)
@@ -145,8 +157,8 @@ export function HomePage() {
   return (
     <>
       <SEOHead
-        title={`${SITE_NAME} — JNTUH Important Questions PDF | R18 R22 R24`}
-        description="Free JNTUH important questions & previous exam patterns for B.Tech — R18, R22, R24. Branch-wise (CSE, ECE, EEE, MECH, CIVIL), semester-wise PDF downloads, unit-wise question banks for Hyderabad & Telangana students."
+        title={`${SITE_NAME} — free unit-wise important questions | up to 96% accuracy`}
+        description={META_DESCRIPTION_DEFAULT}
         canonicalPath="/"
         keywords={[...GLOBAL_SEO_KEYWORDS]}
       />
@@ -168,71 +180,60 @@ export function HomePage() {
           <div className="relative">
             <p className="inline-flex items-center gap-2 rounded-full border border-sky-200/80 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-sky-800 shadow-sm dark:border-sky-500/30 dark:bg-slate-950/60 dark:text-sky-200">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]" aria-hidden />
-              JNTUH · R18 · R22 · R24
+              Free for every JNTUH B.Tech student
             </p>
             <h1 className="mt-5 max-w-3xl font-display text-3xl font-semibold leading-[1.15] tracking-tight text-slate-900 dark:text-white sm:text-4xl md:text-[2.65rem]">
-              Important questions, organized the way your syllabus is.
+              {HOME_HERO_HEADLINE}
             </h1>
             <p className="mt-5 max-w-2xl text-pretty text-base leading-relaxed text-slate-600 dark:text-slate-300 sm:text-lg">
-              Instant search, crisp PDF downloads with watermark, sharing, and comments after sign-in — built for daily
-              study sessions with fast layouts and offline-friendly caching.
+              {HOME_HERO_SUB} Our mission is to help you prepare smarter, score better, and pass confidently — with
+              continuous updates before every examination.
             </p>
-            <ul className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-600 dark:text-slate-400">
-              <li className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-sky-600 shadow-sm dark:bg-slate-800 dark:text-sky-400">
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                Unit-wise pages
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-sky-600 shadow-sm dark:bg-slate-800 dark:text-sky-400">
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                Filter by branch &amp; sem
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-md bg-white text-sky-600 shadow-sm dark:bg-slate-800 dark:text-sky-400">
-                  <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                </span>
-                PWA install on mobile
-              </li>
+            <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+              {TRUST_BADGES.map((label) => (
+                <li
+                  key={label}
+                  className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-white/70 px-3 py-2 text-sm font-medium text-slate-700 shadow-sm dark:border-slate-700/80 dark:bg-slate-900/50 dark:text-slate-200"
+                >
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </span>
+                  {label}
+                </li>
+              ))}
             </ul>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link
                 to="/search"
                 className="inline-flex items-center justify-center gap-2 rounded-2xl bg-sky-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-sky-600/25 transition hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-400"
               >
-                Open search
+                {HOME_CTA_PRIMARY_LABEL}
                 <svg className="h-4 w-4 opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
                 </svg>
               </Link>
               <Link
-                to="/r22/ece/2-1/signals-and-systems/unit-1-important-questions"
+                to="/search"
                 className="inline-flex items-center justify-center rounded-2xl border border-slate-300/90 bg-white/90 px-6 py-3 text-sm font-semibold text-slate-800 shadow-sm transition hover:border-slate-400 hover:bg-white dark:border-slate-600 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-800"
               >
-                View sample unit
+                {HOME_CTA_SECONDARY_LABEL}
+              </Link>
+              <Link
+                to="/blog"
+                className="inline-flex items-center justify-center rounded-2xl border border-sky-200/90 bg-sky-50/90 px-6 py-3 text-sm font-semibold text-sky-900 shadow-sm transition hover:bg-sky-100 dark:border-sky-500/30 dark:bg-sky-950/40 dark:text-sky-100 dark:hover:bg-sky-900/50"
+              >
+                Exam prep blog
               </Link>
             </div>
             </div>
           </section>
 
         <section className="rounded-2xl border border-slate-200/90 bg-white px-6 py-8 shadow-sm dark:border-slate-800 dark:bg-slate-900/40 sm:px-8">
-          <h2 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
-            JNTUH important questions & question bank for engineering students
-          </h2>
+          <h2 className="font-display text-xl font-semibold text-slate-900 dark:text-white">{HOME_VALUE_SECTION_TITLE}</h2>
           <p className="mt-3 max-w-3xl text-pretty leading-relaxed text-slate-600 dark:text-slate-400">
-            Whether you need <strong className="font-medium text-slate-800 dark:text-slate-200">JNTUH previous questions</strong>,{' '}
-            <strong className="font-medium text-slate-800 dark:text-slate-200">mid exam important questions</strong>, or{' '}
-            <strong className="font-medium text-slate-800 dark:text-slate-200">external exam revision</strong>, this platform groups materials by regulation, branch, semester, and unit — the same structure as your syllabus. Students across{' '}
-            <abbr title="Telangana" className="no-underline">TG</abbr> and Hyderabad colleges use search and filters to jump straight to{' '}
-            <strong className="font-medium text-slate-800 dark:text-slate-200">subject-wise PDF downloads</strong> and printable lists.
+            {HOME_VALUE_SECTION_BODY}
           </p>
         </section>
 
@@ -243,7 +244,8 @@ export function HomePage() {
                 Top picks
               </h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Important and Popular units (admins choose these in Home layout). Important rows are listed first.
+                High-impact units flagged from our catalogue — important picks first, then popular. Open any card for
+                unit-wise questions from paper analysis and prediction.
               </p>
             </div>
             <Link
@@ -277,7 +279,8 @@ export function HomePage() {
                 Featured sets
               </h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Hand-picked units to jump in quickly — explore the full catalog from search.
+                Curated starting points — same analysis-backed important questions, free PDFs, and ratings after your
+                exams.
               </p>
             </div>
             <Link
@@ -334,7 +337,8 @@ export function HomePage() {
                 Browse by branch
               </h2>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-                Units marked “on home” for each branch. Admins can hide branches or units from Admin → Home layout.
+                Branch-wise unit lists for faster revision — Regular &amp; Supplementary patterns, all regulations we
+                publish, updated on the schedule students rely on before exams.
               </p>
             </div>
           </div>

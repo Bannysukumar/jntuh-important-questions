@@ -4,6 +4,7 @@ import { Link, Navigate } from 'react-router-dom'
 import { SEOHead } from '@/components/seo/SEOHead'
 import { useAuth } from '@/contexts/AuthContext'
 import { getFirebaseDb, isFirebaseConfigured } from '@/services/firebase/config'
+import { PROFILE_SEO_DESCRIPTION } from '@/lib/siteMessaging'
 import type { UserDegree, UserRole } from '@/types/models'
 
 const DEGREE_LABEL: Record<UserDegree, string> = {
@@ -48,7 +49,7 @@ export function ProfilePage() {
     <>
       <SEOHead
         title="Profile"
-        description="Your JNTUH Important Questions account."
+        description={PROFILE_SEO_DESCRIPTION}
         canonicalPath="/profile"
         noindex
       />
@@ -90,9 +91,8 @@ export function ProfilePage() {
           </p>
         ) : null}
         <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-          Favorites sync, notifications, and comment history are backed by Firestore collections
-          (`favorites`, `notifications`, `comments`) — connect rules and indexes before production
-          traffic.
+          Use your account to save favorite units, join discussions on important questions, and submit live ratings after
+          exams — helping every JNTUH B.Tech student prepare smarter. Features use Firebase when configured.
         </p>
         <Link to="/favorites" className="mt-4 inline-block text-sm font-semibold text-brand-600">
           View favorites →

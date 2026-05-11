@@ -12,6 +12,11 @@ import {
 } from '@/components/seo/JsonLd'
 import { ShareButtons } from '@/components/share/ShareButtons'
 import { SITE_URL } from '@/lib/constants'
+import {
+  PDF_DOWNLOAD_DESCRIPTION,
+  UNIT_PAGE_INTRO,
+  unitPageMetaDescription,
+} from '@/lib/siteMessaging'
 import { gtagPdfDownload } from '@/lib/gtag'
 import { isLocalFavoriteQuestion, toggleLocalFavoriteQuestion } from '@/lib/favoritesLocal'
 import { generateQuestionPdf } from '@/lib/pdf/generateQuestionPdf'
@@ -20,19 +25,19 @@ import { unitPageKeywords } from '@/lib/seoKeywords'
 import {
   fetchQuestionSetByRoute,
   fetchRelatedQuestionSets,
+  fetchSiblingUnitsBySubject,
   incrementQuestionMetric,
 } from '@/services/questionsApi'
 
 const UNIT_FAQ = [
   {
     question: 'How do I download this unit as PDF?',
-    answer:
-      'Use the Download PDF button above the question list. Your browser generates a printable PDF with a watermark linking back to this page.',
+    answer: PDF_DOWNLOAD_DESCRIPTION,
   },
   {
     question: 'Are these questions official JNTUH papers?',
     answer:
-      'Sets are compiled for revision and may include past patterns and important topics. Always verify with your syllabus and faculty — they are not official university publications.',
+      "No. They are independent important-question lists built from previous years' Regular and Supplementary paper analysis and prediction — for revision alongside your syllabus and faculty guidance.",
   },
 ]
 
@@ -59,6 +64,12 @@ export function UnitQuestionPage() {
   const { data: related = [] } = useQuery({
     queryKey: ['related', data?.id],
     queryFn: () => fetchRelatedQuestionSets(data!, 8),
+    enabled: Boolean(data?.id),
+  })
+
+  const { data: siblings = [] } = useQuery({
+    queryKey: ['siblings', data?.id],
+    queryFn: () => fetchSiblingUnitsBySubject(data!),
     enabled: Boolean(data?.id),
   })
 
@@ -96,10 +107,22 @@ export function UnitQuestionPage() {
   const url = `${SITE_URL.replace(/\/$/, '')}${path}`
 
   const searchBase = `/search?regulation=${data.regulation}&branch=${data.branch}&semester=${encodeURIComponent(data.semester)}`
-  const metaDescription = `JNTUH ${data.regulation.toUpperCase()} ${data.branch.toUpperCase()} — ${data.subjectName} (${data.subjectCode}) Unit ${data.unitNumber} important questions. Download PDF, previous exam pattern, ${data.semester} semester. Free for B.Tech students in Telangana.`
+  const metaDescription = unitPageMetaDescription({
+    regulation: data.regulation,
+    branch: data.branch,
+    semester: data.semester,
+    subjectName: data.subjectName,
+    subjectCode: data.subjectCode,
+    unitNumber: data.unitNumber,
+  })
   const kws = [
     ...new Set([...unitPageKeywords(data), ...(data.keywords ?? [])]),
   ].slice(0, 24)
+
+  const sibIdx = siblings.findIndex((q) => q.id === data.id)
+  const prevUnit = sibIdx > 0 ? siblings[sibIdx - 1] : null
+  const nextUnit =
+    sibIdx >= 0 && sibIdx < siblings.length - 1 ? siblings[sibIdx + 1] : null
 
   return (
     <>
@@ -131,7 +154,7 @@ export function UnitQuestionPage() {
       />
       <JsonLdArticle
         title={data.title}
-        description={`Unit ${data.unitNumber} important questions — ${data.subjectName} (${data.subjectCode}) — JNTUH ${data.regulation.toUpperCase()}`}
+        description={`${data.subjectName} (${data.subjectCode}) Unit ${data.unitNumber} — free JNTUH important questions from previous-paper analysis; unit-wise PDF; up to 96% historical accuracy.`}
         path={path}
         datePublished={data.createdAt}
         dateModified={data.updatedAt}
@@ -163,14 +186,17 @@ export function UnitQuestionPage() {
           {data.title}
         </h1>
         <p className="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-          JNTUH important questions for <strong className="font-medium text-slate-800 dark:text-slate-200">{data.subjectName}</strong> ({data.subjectCode}),{' '}
-          <strong className="font-medium text-slate-800 dark:text-slate-200">Unit {data.unitNumber}</strong>, semester{' '}
+          Access carefully selected important questions for{' '}
+          <strong className="font-medium text-slate-800 dark:text-slate-200">{data.subjectName}</strong> (
+          {data.subjectCode}), <strong className="font-medium text-slate-800 dark:text-slate-200">Unit {data.unitNumber}</strong>, semester{' '}
           <strong className="font-medium text-slate-800 dark:text-slate-200">{data.semester}</strong>, regulation{' '}
-          <strong className="font-medium text-slate-800 dark:text-slate-200">{data.regulation.toUpperCase()}</strong>. Use the list below for mid-exam and external exam revision; download the PDF for offline study.
+          <strong className="font-medium text-slate-800 dark:text-slate-200">{data.regulation.toUpperCase()}</strong>, based
+          on repeated questions from past Regular and Supplementary examinations. {UNIT_PAGE_INTRO}
         </p>
         <div className="mt-4 flex flex-wrap gap-3">
           <button
             type="button"
+            title={PDF_DOWNLOAD_DESCRIPTION}
             className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-700"
             onClick={() =>
               void generateQuestionPdf(data, {
@@ -207,6 +233,37 @@ export function UnitQuestionPage() {
         <div className="mt-4">
           <ShareButtons url={url} title={data.title} questionSetId={data.id} />
         </div>
+        {prevUnit || nextUnit ? (
+          <nav
+            className="mt-6 flex flex-wrap justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50/90 px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-900/40"
+            aria-label="Previous and next unit"
+          >
+            {prevUnit ? (
+              <Link
+                to={`/${prevUnit.regulation}/${prevUnit.branch}/${prevUnit.semester}/${slugify(prevUnit.subjectName)}/${unitSegment(prevUnit.unitNumber)}`}
+                className="font-semibold text-sky-700 hover:underline dark:text-sky-400"
+              >
+                ← Unit {prevUnit.unitNumber}
+              </Link>
+            ) : (
+              <span />
+            )}
+            {nextUnit ? (
+              <Link
+                to={`/${nextUnit.regulation}/${nextUnit.branch}/${nextUnit.semester}/${slugify(nextUnit.subjectName)}/${unitSegment(nextUnit.unitNumber)}`}
+                className="font-semibold text-sky-700 hover:underline dark:text-sky-400"
+              >
+                Unit {nextUnit.unitNumber} →
+              </Link>
+            ) : (
+              <span />
+            )}
+          </nav>
+        ) : null}
+        <p className="mt-3 text-xs text-slate-500 dark:text-slate-500">
+          Last updated{' '}
+          <time dateTime={data.updatedAt}>{new Date(data.updatedAt).toLocaleDateString('en-IN')}</time>
+        </p>
       </header>
 
       <ol className="mt-6 list-decimal space-y-4 pl-5 text-slate-800 dark:text-slate-100">
@@ -223,7 +280,7 @@ export function UnitQuestionPage() {
             Related important questions
           </h2>
           <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-            Same semester & branch — explore more units and subjects.
+            Same semester and branch — more analysis-backed important question units for your exam prep.
           </p>
           <ul className="mt-4 space-y-2">
             {related.map((r) => (

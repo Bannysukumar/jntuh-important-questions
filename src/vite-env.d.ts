@@ -1,7 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
-  /** Canonical origin (no trailing slash), e.g. https://jntuh-important-questions.vercel.app */
+  /** Canonical origin (no trailing slash), e.g. https://jntuh-iq.vercel.app */
   readonly VITE_SITE_URL?: string
   readonly VITE_OG_IMAGE_URL?: string
   readonly VITE_GOOGLE_SITE_VERIFICATION?: string

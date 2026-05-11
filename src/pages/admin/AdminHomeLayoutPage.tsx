@@ -28,7 +28,7 @@ export function AdminHomeLayoutPage() {
       config.homeBranchIds.length === 0
         ? [...ALL_BRANCH_IDS]
         : ALL_BRANCH_IDS.filter((id) => config.homeBranchIds.includes(id))
-    setBranchSelection(next)
+    queueMicrotask(() => setBranchSelection(next))
   }, [config, dataUpdatedAt])
 
   const saveBranches = useMutation({

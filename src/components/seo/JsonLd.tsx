@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { SITE_NAME, SITE_URL } from '@/lib/constants'
+import { JSON_LD_ORGANIZATION_DESCRIPTION } from '@/lib/siteMessaging'
 
 const origin = () => SITE_URL.replace(/\/$/, '')
 
@@ -10,8 +11,7 @@ export function JsonLdOrganization() {
     name: SITE_NAME,
     url: SITE_URL,
     logo: `${origin()}/pwa-512.png`,
-    description:
-      'Free JNTUH important questions and unit-wise PDFs for B.Tech students — R18, R22, R24. Search by branch, semester, and subject. Trusted study resources for Hyderabad and Telangana colleges.',
+    description: JSON_LD_ORGANIZATION_DESCRIPTION,
     areaServed: {
       '@type': 'AdministrativeArea',
       name: 'Telangana',
@@ -123,6 +123,35 @@ export function JsonLdLearningResource(input: {
     educationalLevel: input.educationalLevel ?? 'undergraduate',
     inLanguage: 'en-IN',
     provider: { '@type': 'Organization', name: SITE_NAME, url: SITE_URL },
+  }
+  return (
+    <Helmet>
+      <script type="application/ld+json">{JSON.stringify(data)}</script>
+    </Helmet>
+  )
+}
+
+/** Live community ratings only — avoid fabricated aggregate ratings in structured data. */
+export function JsonLdAggregateRating(input: {
+  name: string
+  url: string
+  ratingValue: number
+  reviewCount: number
+  bestRating?: number
+  worstRating?: number
+}) {
+  const data = {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: input.name,
+    url: input.url,
+    aggregateRating: {
+      '@type': 'AggregateRating',
+      ratingValue: String(input.ratingValue),
+      reviewCount: String(input.reviewCount),
+      bestRating: String(input.bestRating ?? 5),
+      worstRating: String(input.worstRating ?? 1),
+    },
   }
   return (
     <Helmet>

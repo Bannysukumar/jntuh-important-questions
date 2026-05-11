@@ -210,6 +210,23 @@ export async function fetchRelatedQuestionSets(current: QuestionSet, limit = 8):
     .slice(0, limit)
 }
 
+/** Same subject (code or subject-name slug), sorted by unit — prev/next navigation. */
+export async function fetchSiblingUnitsBySubject(current: QuestionSet): Promise<QuestionSet[]> {
+  const list = await searchQuestionSets({
+    regulation: current.regulation,
+    branch: current.branch,
+    semester: current.semester,
+  })
+  const code = current.subjectCode.trim().toLowerCase()
+  const nameSlug = slugify(current.subjectName)
+  return list
+    .filter((q) => q.status === 'published')
+    .filter(
+      (q) => q.subjectCode.trim().toLowerCase() === code || slugify(q.subjectName) === nameSlug,
+    )
+    .sort((a, b) => a.unitNumber - b.unitNumber || a.title.localeCompare(b.title))
+}
+
 export async function fetchQuestionById(id: string): Promise<QuestionSet | null> {
   if (!isFirebaseConfigured()) {
     return SAMPLE_QUESTION_SETS.find((q) => q.id === id) ?? null

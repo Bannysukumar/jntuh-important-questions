@@ -21,12 +21,14 @@ export function StickySearchBar() {
   const [q, setQ] = useState('')
 
   useEffect(() => {
-    if (location.pathname.startsWith('/search')) {
-      const sp = new URLSearchParams(location.search)
-      setQ(sp.get('q') ?? '')
-    } else {
-      setQ('')
-    }
+    queueMicrotask(() => {
+      if (location.pathname.startsWith('/search')) {
+        const sp = new URLSearchParams(location.search)
+        setQ(sp.get('q') ?? '')
+      } else {
+        setQ('')
+      }
+    })
   }, [location.pathname, location.search])
 
   function submit() {

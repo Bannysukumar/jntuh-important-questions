@@ -80,9 +80,9 @@ function QuestionEditorForm({
   const [keywordsStr, setKeywordsStr] = useState(() => (initial?.keywords ?? []).join(', '))
 
   useEffect(() => {
-    if (regIds.length && !regIds.includes(form.regulation)) {
-      setForm((f) => ({ ...f, regulation: (regIds[0] ?? 'r22') as RegulationId }))
-    }
+    if (!regIds.length || regIds.includes(form.regulation)) return
+    const nextReg = (regIds[0] ?? 'r22') as RegulationId
+    queueMicrotask(() => setForm((f) => (f.regulation === nextReg ? f : { ...f, regulation: nextReg })))
   }, [regIds, form.regulation])
 
   const slugPreview = useMemo(

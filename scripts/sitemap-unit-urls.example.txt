@@ -1,0 +1,7 @@
+# Optional: one canonical path per line (must start with /).
+# Copy to sitemap-unit-urls.txt (gitignored) and list published unit URLs
+# so sitemap-units.xml and the sitemap index include them at build time.
+#
+# Examples (replace with your real regulation/branch/semester/subject slugs):
+# /r22/cse/2-1/digital-logic-design/unit-3-important-questions
+# /r18/ece/3-1/analog-electronics/unit-2-important-questions

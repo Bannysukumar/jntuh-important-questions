@@ -1,13 +1,65 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!robots\\.txt$)(?!.*\\.xml$)(?!.*\\.webmanifest$)(?!.*\\.json$)(?!.*\\.js$)(?!.*\\.css$)(?!.*\\.ico$)(?!.*\\.png$)(?!.*\\.svg$)(?!.*\\.woff2$)(?!.*\\.txt$).*)",
       "destination": "/index.html"
     }
   ],
   "headers": [
     {
       "source": "/sitemap.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap-static.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap-subjects.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap-blog.xml",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/xml; charset=utf-8"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400"
+        }
+      ]
+    },
+    {
+      "source": "/sitemap-units.xml",
       "headers": [
         {
           "key": "Content-Type",

@@ -2,9 +2,9 @@
 User-agent: *
 Allow: /
 
-# Private / auth surfaces (thin utility routes — consolidate crawl budget on public content)
+# Private / auth surfaces
 Disallow: /admin
 Disallow: /login
 Disallow: /profile
 
-Sitemap: https://jntuh-important-questions.vercel.app/sitemap.xml
+Sitemap: https://jntuh-iq.vercel.app/sitemap.xml

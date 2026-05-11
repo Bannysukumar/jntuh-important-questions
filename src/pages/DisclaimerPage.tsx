@@ -6,7 +6,7 @@ export function DisclaimerPage() {
     <>
       <SEOHead
         title="Disclaimer"
-        description={`Important disclaimer for ${SITE_NAME}: independent resource, not affiliated with JNTUH.`}
+        description={`Disclaimer — ${SITE_NAME}: free independent JNTUH B.Tech important questions from paper analysis; not affiliated with JNTUH.`}
         canonicalPath="/disclaimer"
         keywords={['JNTUH disclaimer', 'educational resource', SITE_NAME]}
       />

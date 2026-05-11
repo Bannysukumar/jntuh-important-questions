@@ -21,10 +21,9 @@ export function useSearchFilters() {
   const [local, setLocal] = useState<Filters>({ regulation: '', branch: '', semester: '' })
 
   useEffect(() => {
-    if (onSearchRoute) {
-      setLocal(fromUrl)
-    }
-  }, [onSearchRoute, fromUrl.regulation, fromUrl.branch, fromUrl.semester])
+    if (!onSearchRoute) return
+    queueMicrotask(() => setLocal(fromUrl))
+  }, [onSearchRoute, fromUrl])
 
   const regulation = onSearchRoute ? fromUrl.regulation : local.regulation
   const branch = onSearchRoute ? fromUrl.branch : local.branch

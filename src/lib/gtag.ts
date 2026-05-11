@@ -1,5 +1,5 @@
 /** Must match the measurement ID in `index.html` (Google tag / gtag.js). */
-export const GA_MEASUREMENT_ID = 'G-9396NXS3R9'
+export const GA_MEASUREMENT_ID = 'G-LZH26V2Q9T'
 
 declare global {
   interface Window {

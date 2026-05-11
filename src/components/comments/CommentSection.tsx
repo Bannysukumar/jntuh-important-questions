@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useAuthModal } from '@/contexts/AuthModalContext'
 import { shouldBlockComment } from '@/lib/moderation'
+import { COMMENTS_SECTION_INTRO } from '@/lib/siteMessaging'
 import { addComment, deleteMyComment, fetchCommentsForQuestion } from '@/services/commentsApi'
 import type { CommentDoc } from '@/types/models'
 
@@ -89,7 +90,8 @@ export function CommentSection({ questionSetId }: { questionSetId: string }) {
     <section className="mt-10 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
       <h2 className="font-display text-xl font-semibold text-slate-900 dark:text-white">Comments</h2>
       <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
-        Sign in to post and reply. Everyone can read threads. Admins are labeled when they participate.
+        {COMMENTS_SECTION_INTRO} Sign in to post and reply; everyone can read threads. Admins are labeled when they
+        participate.
       </p>
 
       {user ? (

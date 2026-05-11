@@ -88,6 +88,64 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Public site ratings: one document per user (`siteRatings/{auth.uid}`). Anyone can read; owner writes.
+    match /siteRatings/{ratingId} {
+      function siteRatingStarsOk() {
+        return request.resource.data.stars is int
+          && request.resource.data.stars >= 1
+          && request.resource.data.stars <= 5;
+      }
+      function siteRatingCommentOk() {
+        return request.resource.data.comment is string
+          && request.resource.data.comment.size() >= 0
+          && request.resource.data.comment.size() <= 2000;
+      }
+      function siteRatingNameOk() {
+        return request.resource.data.authorName is string
+          && request.resource.data.authorName.size() >= 1
+          && request.resource.data.authorName.size() <= 120;
+      }
+      function siteRatingKeysAll() {
+        return request.resource.data.keys().hasOnly([
+          'authorUid',
+          'authorName',
+          'stars',
+          'comment',
+          'createdAt',
+          'updatedAt',
+        ]);
+      }
+
+      allow read: if true;
+
+      allow create: if isSignedIn()
+        && ratingId == request.auth.uid
+        && siteRatingKeysAll()
+        && request.resource.data.authorUid == request.auth.uid
+        && request.resource.data.authorUid == ratingId
+        && siteRatingStarsOk()
+        && siteRatingCommentOk()
+        && siteRatingNameOk()
+        && request.resource.data.createdAt is timestamp
+        && request.resource.data.updatedAt is timestamp;
+
+      allow update: if isSignedIn()
+        && ratingId == request.auth.uid
+        && siteRatingKeysAll()
+        && resource.data.authorUid == request.auth.uid
+        && request.resource.data.authorUid == resource.data.authorUid
+        && request.resource.data.authorUid == ratingId
+        && request.resource.data.createdAt == resource.data.createdAt
+        && siteRatingStarsOk()
+        && siteRatingCommentOk()
+        && siteRatingNameOk()
+        && request.resource.data.updatedAt is timestamp;
+
+      allow delete: if isSignedIn()
+        && ratingId == request.auth.uid
+        && resource.data.authorUid == request.auth.uid;
+    }
+
     // Suggestions / feedback from help center. Create by anyone (validated); read/update admin-only.
     match /feedback/{docId} {
       function feedbackKeysOk() {

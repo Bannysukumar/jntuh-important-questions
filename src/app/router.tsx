@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components -- route table + lazy chunks, not a component module */
 import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { RootLayout } from '@/components/layout/RootLayout'
@@ -10,9 +11,12 @@ import { LoginGatePage } from '@/pages/LoginGatePage'
 import { ProfilePage } from '@/pages/ProfilePage'
 import { AboutPage } from '@/pages/AboutPage'
 import { HelpCenterPage } from '@/pages/HelpCenterPage'
+import { SiteRatingsPage } from '@/pages/SiteRatingsPage'
 import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage'
 import { TermsOfServicePage } from '@/pages/TermsOfServicePage'
 import { DisclaimerPage } from '@/pages/DisclaimerPage'
+import { BlogIndexPage } from '@/pages/BlogIndexPage'
+import { BlogPostPage } from '@/pages/BlogPostPage'
 import { AdminRoute } from '@/pages/admin/AdminRoute'
 import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage'
 import { AdminBackupPage } from '@/pages/admin/AdminBackupPage'
@@ -58,10 +62,13 @@ export const router = createBrowserRouter([
           { path: 'favorites', element: <FavoritesPage /> },
           { path: 'profile', element: <ProfilePage /> },
           { path: 'about', element: <AboutPage /> },
+          { path: 'ratings', element: <SiteRatingsPage /> },
           { path: 'help', element: <HelpCenterPage /> },
           { path: 'privacy', element: <PrivacyPolicyPage /> },
           { path: 'terms', element: <TermsOfServicePage /> },
           { path: 'disclaimer', element: <DisclaimerPage /> },
+          { path: 'blog', element: <BlogIndexPage /> },
+          { path: 'blog/:slug', element: <BlogPostPage /> },
           { path: '*', element: <Navigate to="/" replace /> },
         ],
       },

@@ -1,21 +1,23 @@
 import { useState, type FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { SEOHead } from '@/components/seo/SEOHead'
 import { useAuth } from '@/contexts/AuthContext'
 import { SITE_NAME } from '@/lib/constants'
+import { HELP_SEO_DESCRIPTION, RATINGS_SEO_DESCRIPTION } from '@/lib/siteMessaging'
 import { submitFeedback } from '@/services/feedbackApi'
 
 const faqs = [
   {
     q: 'Do I need an account to read questions?',
-    a: 'No. Unit pages are open to everyone. Sign in to comment or sync favorites across devices.',
+    a: 'No. Unit-wise important questions are free for everyone. Sign in to comment, save favorites across devices, or submit your live rating after exams.',
   },
   {
     q: 'How do I download a PDF?',
-    a: 'Open any unit page and use “Download PDF”. Files include a watermark and a QR code linking back to the page.',
+    a: 'Open any unit page and use Download PDF. You get a watermark-protected file with analysis-backed important questions — same mission as the on-page lists.',
   },
   {
     q: 'How do I search by regulation or branch?',
-    a: 'Open Browse from the sidebar, then pick regulation, branch, and semester and run a search. You can also type a subject name or code.',
+    a: 'Open Browse from the sidebar, pick regulation (R18, R22, and newer as published), branch, and semester, then search. Lists come from previous Regular and Supplementary paper analysis.',
   },
   {
     q: 'How do JNTUH results and CGPA work?',
@@ -111,8 +113,9 @@ export function HelpCenterPage() {
     <>
       <SEOHead
         title="Help center"
-        description={`Get help using ${SITE_NAME}: FAQs, search, PDFs, and send feedback.`}
+        description={HELP_SEO_DESCRIPTION}
         canonicalPath="/help"
+        keywords={['JNTUH help', 'free important questions', 'JNTUH PDF', SITE_NAME]}
       />
 
       <div className="mx-auto max-w-3xl pb-16">
@@ -130,7 +133,9 @@ export function HelpCenterPage() {
                 How can we help you?
               </h1>
               <p className="mx-auto mt-3 max-w-xl text-pretty text-sm leading-relaxed text-slate-600 dark:text-slate-400">
-                Choose a topic below — browse quick answers or send a message straight to our team.
+                Free JNTUH B.Tech important questions from previous years&apos; Regular and Supplementary paper analysis
+                — unit-wise PDFs, up to 96% historical accuracy, continuous updates before exams, and live ratings after
+                your papers. Choose a topic below for FAQs, ratings, or feedback.
               </p>
             </header>
 
@@ -158,6 +163,32 @@ export function HelpCenterPage() {
                 </span>
                 <ChevronRight className="relative h-5 w-5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-sky-600 dark:group-hover:text-sky-400" />
               </button>
+
+              <Link
+                to="/ratings"
+                className="group relative flex w-full items-center gap-5 overflow-hidden rounded-2xl border border-slate-200/90 bg-white p-5 text-left shadow-sm transition hover:border-amber-300 hover:shadow-md dark:border-slate-700/90 dark:bg-slate-900/40 dark:hover:border-amber-500/40 sm:p-6"
+              >
+                <span
+                  className="absolute inset-y-0 left-0 w-1 rounded-l-2xl bg-gradient-to-b from-amber-400 to-orange-500 opacity-90"
+                  aria-hidden
+                />
+                <span className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-500 to-orange-500 text-white shadow-lg shadow-amber-600/25">
+                  <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M11.049 2.927c.3-.921 1.603-.921 1.902l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+                    />
+                  </svg>
+                </span>
+                <span className="relative min-w-0 flex-1 pl-1">
+                  <span className="block font-semibold text-slate-900 dark:text-white">Site ratings</span>
+                  <span className="mt-1 block text-sm leading-relaxed text-slate-600 dark:text-slate-400">
+                    {RATINGS_SEO_DESCRIPTION}
+                  </span>
+                </span>
+                <ChevronRight className="relative h-5 w-5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-amber-600 dark:group-hover:text-amber-400" />
+              </Link>
 
               <button
                 type="button"

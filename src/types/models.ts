@@ -114,6 +114,19 @@ export interface AdminSiteConfig extends SiteSettings {
   regulations: RegulationEntry[]
 }
 
+/** Public site rating at `siteRatings/{uid}` — one doc per signed-in user. */
+export interface SiteRatingDoc {
+  /** Document id equals `authorUid`. */
+  id: string
+  authorUid: string
+  authorName: string
+  /** 1–5 stars. */
+  stars: number
+  comment: string
+  createdAt: string
+  updatedAt: string
+}
+
 /** Student feedback at `feedback/{id}`. Readable only by admins. */
 export type FeedbackStatus = 'new' | 'read' | 'archived'
 

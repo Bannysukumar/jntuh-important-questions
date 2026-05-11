@@ -1,12 +1,15 @@
 /* eslint-disable react-refresh/only-export-components -- useAuth is co-located with AuthProvider */
 import {
   createUserWithEmailAndPassword,
+  EmailAuthProvider,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut as firebaseSignOut,
+  updatePassword,
   updateProfile,
   type User,
 } from 'firebase/auth'
@@ -31,6 +34,8 @@ interface AuthContextValue {
   signInEmail: (email: string, password: string) => Promise<void>
   signUpEmail: (email: string, password: string, profile: SignUpProfile) => Promise<void>
   sendPasswordReset: (email: string) => Promise<void>
+  /** Email/password accounts only. Re-authenticates then sets new password. */
+  changePassword: (currentPassword: string, newPassword: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -170,6 +175,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email)
   }, [])
 
+  const changePassword = useCallback(async (currentPassword: string, newPassword: string) => {
+    if (!isFirebaseConfigured()) {
+      throw new Error('Firebase is not configured.')
+    }
+    const auth = getFirebaseAuth()
+    const u = auth.currentUser
+    if (!u?.email) {
+      throw new Error('You must be signed in with an email account to change your password.')
+    }
+    const cred = EmailAuthProvider.credential(u.email, currentPassword)
+    await reauthenticateWithCredential(u, cred)
+    await updatePassword(u, newPassword)
+  }, [])
+
   const signOut = useCallback(async () => {
     if (!isFirebaseConfigured()) return
     await firebaseSignOut(getFirebaseAuth())
@@ -184,9 +203,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       signInEmail,
       signUpEmail,
       sendPasswordReset,
+      changePassword,
       signOut,
     }),
-    [user, loading, isAdmin, signInGoogle, signInEmail, signUpEmail, sendPasswordReset, signOut],
+    [user, loading, isAdmin, signInGoogle, signInEmail, signUpEmail, sendPasswordReset, changePassword, signOut],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

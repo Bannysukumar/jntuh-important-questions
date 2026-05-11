@@ -1,5 +1,11 @@
 /** Primary queries we target across the site (homepage, meta templates). */
 export const GLOBAL_SEO_KEYWORDS = [
+  'Free JNTUH Important Questions',
+  'Previous Years Question Analysis',
+  'Unit-Wise PDF Downloads',
+  'Up to 96% Historical Accuracy',
+  'Updated Before Every Examination',
+  'JNTUH Regular Supplementary Exams',
   'JNTUH Important Questions',
   'JNTUH Previous Questions',
   'JNTUH PDF Downloads',

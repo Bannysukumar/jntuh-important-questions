@@ -4,6 +4,7 @@ import { AppSidebar } from './AppSidebar'
 import { StickySearchBar } from '../search/StickySearchBar'
 import { ThemeToggle } from './ThemeToggle'
 import { useAuth } from '../../contexts/AuthContext'
+import { FOOTER_TAGLINE, SITE_SIDEBAR_TAGLINE } from '@/lib/siteMessaging'
 
 export function MainLayout() {
   const { user, isAdmin, signOut } = useAuth()
@@ -11,7 +12,7 @@ export function MainLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
-    setSidebarOpen(false)
+    queueMicrotask(() => setSidebarOpen(false))
   }, [location.pathname])
 
   return (
@@ -47,7 +48,7 @@ export function MainLayout() {
               JNTUH Important Questions
             </p>
             <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-500 dark:text-slate-400">
-              Unit-wise prep · R18 · R22 · R24
+              Free · Paper analysis · Unit-wise PDFs
             </p>
           </Link>
           <button
@@ -65,7 +66,7 @@ export function MainLayout() {
           <AppSidebar onNavigate={() => setSidebarOpen(false)} />
         </div>
         <div className="border-t border-slate-100 px-4 py-3 text-[11px] leading-relaxed text-slate-500 dark:border-slate-800/80 dark:text-slate-500">
-          Curated for JNTUH students — fast search, PDFs, and comments after sign-in.
+          {SITE_SIDEBAR_TAGLINE}
         </div>
       </aside>
 
@@ -153,6 +154,12 @@ export function MainLayout() {
             <span aria-hidden className="text-slate-300 dark:text-slate-600">
               ·
             </span>
+            <Link to="/ratings" className="hover:text-slate-800 dark:hover:text-slate-300">
+              Ratings
+            </Link>
+            <span aria-hidden className="text-slate-300 dark:text-slate-600">
+              ·
+            </span>
             <Link to="/privacy" className="hover:text-slate-800 dark:hover:text-slate-300">
               Privacy
             </Link>
@@ -169,8 +176,8 @@ export function MainLayout() {
               Disclaimer
             </Link>
           </nav>
-          <p className="mt-4">
-            © {new Date().getFullYear()} JNTUH Important Questions · Built for students across Telangana
+          <p className="mt-4 max-w-xl mx-auto leading-relaxed text-slate-600 dark:text-slate-400">
+            © {new Date().getFullYear()} JNTUH Important Questions · {FOOTER_TAGLINE}
           </p>
         </footer>
       </div>

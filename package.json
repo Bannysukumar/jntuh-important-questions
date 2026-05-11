@@ -4,7 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "sitemap": "node scripts/build-sitemaps.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/build-sitemaps.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"

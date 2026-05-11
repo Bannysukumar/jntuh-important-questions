@@ -1,6 +1,23 @@
+import { useMemo } from 'react'
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
 
-const items = [
+const profileItem = {
+  to: '/profile',
+  label: 'Profile',
+  end: false,
+  icon: (
+    <svg className="h-[1.125rem] w-[1.125rem] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
+    </svg>
+  ),
+}
+
+const itemsBeforeProfile = [
   {
     to: '/',
     label: 'Home',
@@ -22,6 +39,16 @@ const items = [
     ),
   },
   {
+    to: '/blog',
+    label: 'Blog',
+    end: false,
+    icon: (
+      <svg className="h-[1.125rem] w-[1.125rem] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+        <path strokeLinecap="round" strokeLinejoin="round" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+      </svg>
+    ),
+  },
+  {
     to: '/favorites',
     label: 'Favorites',
     end: false,
@@ -31,6 +58,24 @@ const items = [
       </svg>
     ),
   },
+] as const
+
+const ratingsItem = {
+  to: '/ratings',
+  label: 'Ratings',
+  end: false,
+  icon: (
+    <svg className="h-[1.125rem] w-[1.125rem] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11.049 2.927c.3-.921 1.603-.921 1.902l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"
+      />
+    </svg>
+  ),
+}
+
+const itemsAfterProfile = [
   {
     to: '/about',
     label: 'About',
@@ -63,6 +108,15 @@ function navClassName({ isActive }: { isActive: boolean }) {
 }
 
 export function AppSidebar({ onNavigate }: { onNavigate?: () => void }) {
+  const { user } = useAuth()
+
+  const items = useMemo(() => {
+    if (user) {
+      return [...itemsBeforeProfile, profileItem, ratingsItem, ...itemsAfterProfile] as const
+    }
+    return [...itemsBeforeProfile, ratingsItem, ...itemsAfterProfile] as const
+  }, [user])
+
   return (
     <nav className="flex flex-col gap-0.5 px-3 pb-4 pt-3" aria-label="Main">
       <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">

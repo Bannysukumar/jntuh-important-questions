@@ -7,7 +7,7 @@ export function PrivacyPolicyPage() {
     <>
       <SEOHead
         title="Privacy Policy"
-        description={`How ${SITE_NAME} collects, uses, and protects information when you use our JNTUH study platform.`}
+        description={`Privacy — ${SITE_NAME}: how we handle data for free JNTUH unit-wise important questions, PDFs, ratings, and accounts.`}
         canonicalPath="/privacy"
         keywords={['privacy policy', 'JNTUH', 'student data', SITE_NAME]}
       />

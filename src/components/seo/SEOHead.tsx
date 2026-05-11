@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 import { SITE_NAME, SITE_URL } from '@/lib/constants'
+import { OG_IMAGE_ALT } from '@/lib/siteMessaging'
 
 export interface SEOHeadProps {
   title: string
@@ -20,6 +21,22 @@ function defaultOgImage(): string {
   return `${SITE_URL.replace(/\/$/, '')}/pwa-512.png`
 }
 
+/** Google SERP best practice: ~150–160 visible characters */
+function clampMetaDescription(raw: string, max = 160): string {
+  const t = raw.trim().replace(/\s+/g, ' ')
+  if (t.length <= max) return t
+  const slice = t.slice(0, max - 1)
+  const cut = slice.lastIndexOf(' ')
+  const base = cut > 100 ? slice.slice(0, cut) : slice
+  return `${base.trimEnd()}…`
+}
+
+/** Keep document title in a SERP-friendly band (full string includes brand suffix). */
+function clampDocumentTitle(fullTitle: string, max = 60): string {
+  if (fullTitle.length <= max) return fullTitle
+  return `${fullTitle.slice(0, max - 1).trimEnd()}…`
+}
+
 export function SEOHead({
   title,
   description,
@@ -34,13 +51,15 @@ export function SEOHead({
   const path = canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`
   const canonical = `${SITE_URL.replace(/\/$/, '')}${path}`
   const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`
+  const documentTitle = clampDocumentTitle(fullTitle)
+  const metaDescription = clampMetaDescription(description)
   const imageUrl = ogImage ?? defaultOgImage()
   const verification = import.meta.env.VITE_GOOGLE_SITE_VERIFICATION
 
   return (
     <Helmet>
-      <title>{fullTitle}</title>
-      <meta name="description" content={description} />
+      <title>{documentTitle}</title>
+      <meta name="description" content={metaDescription} />
       {keywords.length > 0 ? <meta name="keywords" content={keywords.join(', ')} /> : null}
       <link rel="canonical" href={canonical} />
       <meta name="robots" content={noindex ? 'noindex,nofollow' : 'index,follow,max-image-preview:large'} />
@@ -53,20 +72,21 @@ export function SEOHead({
       <meta name="audience" content="students, JNTUH B.Tech" />
       <meta name="target" content="JNTUH engineering students" />
 
-      <meta property="og:title" content={fullTitle} />
-      <meta property="og:description" content={description} />
+      <meta property="og:title" content={documentTitle} />
+      <meta property="og:description" content={metaDescription} />
       <meta property="og:type" content={ogType} />
       <meta property="og:url" content={canonical} />
       <meta property="og:site_name" content={SITE_NAME} />
       <meta property="og:image" content={imageUrl} />
       <meta property="og:image:width" content="512" />
       <meta property="og:image:height" content="512" />
-      <meta property="og:image:alt" content={`${SITE_NAME} — JNTUH study resources`} />
+      <meta property="og:image:alt" content={OG_IMAGE_ALT} />
 
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:title" content={fullTitle} />
-      <meta name="twitter:description" content={description} />
+      <meta name="twitter:title" content={documentTitle} />
+      <meta name="twitter:description" content={metaDescription} />
       <meta name="twitter:image" content={imageUrl} />
+      <meta name="twitter:image:alt" content={OG_IMAGE_ALT} />
 
       {ogType === 'article' && articlePublishedTime ? (
         <meta property="article:published_time" content={articlePublishedTime} />

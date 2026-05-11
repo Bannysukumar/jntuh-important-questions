@@ -4,6 +4,7 @@ import { SEOHead } from '@/components/seo/SEOHead'
 import { getLocalFavoriteQuestionIds } from '@/lib/favoritesLocal'
 import { slugify, unitSegment } from '@/lib/slug'
 import { fetchQuestionById } from '@/services/questionsApi'
+import { FAVORITES_SEO_DESCRIPTION } from '@/lib/siteMessaging'
 
 export function FavoritesPage() {
   const { data: items = [], isLoading } = useQuery({
@@ -19,14 +20,14 @@ export function FavoritesPage() {
     <>
       <SEOHead
         title="Saved favorites"
-        description="Your saved JNTUH important question sets."
+        description={FAVORITES_SEO_DESCRIPTION}
         canonicalPath="/favorites"
         noindex
       />
       <h1 className="font-display text-3xl font-bold text-slate-900 dark:text-white">Favorites</h1>
       <p className="mt-2 text-slate-600 dark:text-slate-400">
-        Stored locally on this device. Sign in to sync across devices (Firestore `favorites`
-        collection — wire in production).
+        Bookmark analysis-backed important question sets for quick revision. Stored locally on this device; sign in to
+        sync favorites across devices when your account is connected.
       </p>
       {isLoading ? <p className="mt-4 text-slate-500">Loading…</p> : null}
       <ul className="mt-6 space-y-3">

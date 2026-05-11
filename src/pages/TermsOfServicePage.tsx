@@ -7,7 +7,7 @@ export function TermsOfServicePage() {
     <>
       <SEOHead
         title="Terms of Service"
-        description={`Terms governing use of ${SITE_NAME} — JNTUH important questions, PDFs, and study tools.`}
+        description={`Terms of service — ${SITE_NAME}: free JNTUH important questions, PDFs, comments, and ratings.`}
         canonicalPath="/terms"
         keywords={['terms of service', 'JNTUH', SITE_NAME]}
       />
