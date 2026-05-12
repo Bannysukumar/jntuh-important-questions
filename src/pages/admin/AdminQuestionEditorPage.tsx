@@ -1,9 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
 import { useRegulations } from '@/hooks/useRegulations'
-import { BRANCHES, DEFAULT_REGULATIONS, SEMESTERS, YEARS } from '@/lib/constants'
+import {
+  BRANCHES,
+  DEFAULT_REGULATIONS,
+  inferYearLabelFromSemester,
+  SEMESTERS,
+  YEARS,
+} from '@/lib/constants'
 import { questionSetPublicPath } from '@/lib/adminPaths'
 import { unitPageKeywords } from '@/lib/seoKeywords'
 import {
@@ -83,6 +89,10 @@ function emptyQuestionSet(): QuestionSet {
   }
 }
 
+function isQuestionStatus(s: string): s is QuestionStatus {
+  return s === 'draft' || s === 'published' || s === 'archived'
+}
+
 function applySearchPrefill(base: QuestionSet, sp: Record<string, string>, validRegIds: string[]): QuestionSet {
   const r = sp.regulation?.toLowerCase()
   if (r && validRegIds.includes(r)) base.regulation = r as RegulationId
@@ -90,6 +100,21 @@ function applySearchPrefill(base: QuestionSet, sp: Record<string, string>, valid
   if (sp.semester) base.semester = sp.semester
   if (sp.subjectName) base.subjectName = decodeURIComponent(sp.subjectName)
   if (sp.subjectCode) base.subjectCode = decodeURIComponent(sp.subjectCode)
+
+  const yearParam = sp.year ? decodeURIComponent(sp.year).trim() : ''
+  if (yearParam) {
+    base.year = yearParam
+  } else if (base.semester.trim()) {
+    base.year = inferYearLabelFromSemester(base.semester)
+  }
+
+  if (sp.unitNumber) {
+    const u = Number.parseInt(sp.unitNumber, 10)
+    if (Number.isFinite(u) && u >= 1) base.unitNumber = u
+  }
+
+  if (sp.status && isQuestionStatus(sp.status)) base.status = sp.status
+
   return base
 }
 
@@ -553,8 +578,15 @@ function QuestionEditorForm({
 
 export function AdminQuestionCreatePage() {
   const [sp] = useSearchParams()
+  const location = useLocation()
   const searchPrefill = useMemo(() => Object.fromEntries(sp.entries()), [sp])
-  return <QuestionEditorForm mode="create" searchPrefill={searchPrefill} />
+  return (
+    <QuestionEditorForm
+      key={location.search || 'new'}
+      mode="create"
+      searchPrefill={searchPrefill}
+    />
+  )
 }
 
 export function AdminQuestionEditPage() {

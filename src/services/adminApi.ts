@@ -9,7 +9,7 @@ import {
   setDoc,
   updateDoc,
 } from 'firebase/firestore'
-import { DEFAULT_REGULATIONS, SITE_NAME } from '@/lib/constants'
+import { DEFAULT_REGULATIONS, inferYearLabelFromSemester, SITE_NAME } from '@/lib/constants'
 import { getFirebaseDb, isFirebaseConfigured } from '@/services/firebase/config'
 import { adminFetchAllComments } from '@/services/commentsApi'
 import {
@@ -21,6 +21,7 @@ import {
 import type {
   AdminSiteConfig,
   QuestionSet,
+  QuestionStatus,
   RegulationEntry,
   RegulationId,
   UserDegree,
@@ -303,16 +304,49 @@ export interface SubjectAggregateRow {
   branch: string
   semester: string
   unitCount: number
+  /** Highest `unitNumber` among question sets in this subject group. */
+  maxUnitNumber: number
+  /** Year label from that highest-numbered unit (for “Add unit” prefill). */
+  year: string
+  /** Status on that same unit — new unit should match by default. */
+  lastUnitStatus: QuestionStatus
+}
+
+type SubjectAggAcc = SubjectAggregateRow & { refUpdatedAt: string }
+
+function coerceQuestionStatus(raw: unknown): QuestionStatus {
+  const v = String(raw ?? '').toLowerCase()
+  if (v === 'draft' || v === 'published' || v === 'archived') return v
+  return 'published'
+}
+
+function displayYearForSet(q: QuestionSet): string {
+  const y = String(q.year ?? '').trim()
+  if (y) return y
+  return inferYearLabelFromSemester(q.semester)
+}
+
+function positiveUnitNumber(n: unknown): number {
+  const v = Number(n)
+  return Number.isFinite(v) && v >= 1 ? Math.floor(v) : 1
 }
 
 export async function fetchSubjectAggregates(): Promise<SubjectAggregateRow[]> {
   const sets = await adminListAllQuestionSets()
-  const map = new Map<string, SubjectAggregateRow>()
+  const map = new Map<string, SubjectAggAcc>()
   for (const q of sets) {
     const key = `${q.regulation}|${q.branch}|${q.semester}|${q.subjectCode.toLowerCase()}`
+    const u = positiveUnitNumber(q.unitNumber)
+    const candAt = q.updatedAt || ''
     const cur = map.get(key)
     if (cur) {
       cur.unitCount += 1
+      if (u > cur.maxUnitNumber || (u === cur.maxUnitNumber && candAt >= cur.refUpdatedAt)) {
+        cur.maxUnitNumber = u
+        cur.refUpdatedAt = candAt
+        cur.year = displayYearForSet(q)
+        cur.lastUnitStatus = coerceQuestionStatus(q.status)
+      }
     } else {
       map.set(key, {
         key,
@@ -322,10 +356,16 @@ export async function fetchSubjectAggregates(): Promise<SubjectAggregateRow[]> {
         branch: q.branch,
         semester: q.semester,
         unitCount: 1,
+        maxUnitNumber: u,
+        refUpdatedAt: candAt,
+        year: displayYearForSet(q),
+        lastUnitStatus: coerceQuestionStatus(q.status),
       })
     }
   }
-  return [...map.values()].sort((a, b) => a.subjectName.localeCompare(b.subjectName))
+  return [...map.values()]
+    .map(({ refUpdatedAt: _r, ...row }) => row)
+    .sort((a, b) => a.subjectName.localeCompare(b.subjectName))
 }
 
 export interface BranchAggregateRow {

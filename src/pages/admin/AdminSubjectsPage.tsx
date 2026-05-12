@@ -73,8 +73,20 @@ export function AdminSubjectsPage() {
     setEditRow(row)
   }
 
-  const newUnitHref = (r: SubjectAggregateRow) =>
-    `/admin/questions/new?regulation=${encodeURIComponent(r.regulation)}&branch=${encodeURIComponent(r.branch)}&semester=${encodeURIComponent(r.semester)}&subjectName=${encodeURIComponent(r.subjectName)}&subjectCode=${encodeURIComponent(r.subjectCode)}`
+  const newUnitHref = (r: SubjectAggregateRow) => {
+    const nextUnit = r.maxUnitNumber + 1
+    const params = new URLSearchParams({
+      regulation: r.regulation,
+      branch: r.branch,
+      semester: r.semester,
+      subjectName: r.subjectName,
+      subjectCode: r.subjectCode,
+      year: r.year,
+      unitNumber: String(nextUnit),
+      status: r.lastUnitStatus,
+    })
+    return `/admin/questions/new?${params.toString()}`
+  }
 
   return (
     <div>

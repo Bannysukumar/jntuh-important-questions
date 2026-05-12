@@ -40,6 +40,13 @@ export const SEMESTERS = [
 
 export const YEARS = ['1st', '2nd', '3rd', '4th'] as const
 
+/** When Firestore `year` is empty, derive a label from semester (e.g. `1-2` → `1st`). */
+export function inferYearLabelFromSemester(semester: string): string {
+  const d = semester.trim().charAt(0)
+  const map: Record<string, string> = { '1': '1st', '2': '2nd', '3': '3rd', '4': '4th' }
+  return map[d] ?? '2nd'
+}
+
 export const PROFANITY_BLOCKLIST = [
   'spam',
   'scam',
