@@ -236,7 +236,11 @@ export function AdminSubjectsPage() {
             </label>
           </div>
           {patchMut.isError ? (
-            <p className="mt-3 text-sm text-red-300">Update failed. Check permissions.</p>
+            <p className="mt-3 text-sm text-red-300">
+              {patchMut.error instanceof Error
+                ? patchMut.error.message
+                : 'Update failed. If rules block writes, ensure your account is admin in Firestore.'}
+            </p>
           ) : null}
         </AdminModal>
       ) : null}

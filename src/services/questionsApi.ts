@@ -366,7 +366,9 @@ export async function adminSaveQuestionSet(full: QuestionSet): Promise<void> {
     return
   }
   const db = getFirebaseDb()
-  await setDoc(doc(db, COLLECTION, full.id), payload, { merge: true })
+  // Firestore rejects undefined field values; optional QuestionSet fields (e.g. pdfUrl) must be omitted.
+  const sanitized = JSON.parse(JSON.stringify(payload)) as Record<string, unknown>
+  await setDoc(doc(db, COLLECTION, full.id), sanitized, { merge: true })
 }
 
 /** All statuses; requires admin Firestore rules. */
