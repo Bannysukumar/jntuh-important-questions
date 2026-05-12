@@ -8,6 +8,7 @@ import { DEFAULT_REGULATIONS } from '@/lib/constants'
 import {
   adminBulkDeleteByBranchRow,
   adminBulkPatchByBranchRow,
+  adminCloneBranchRow,
   fetchBranchAggregates,
   type BranchAggregateRow,
 } from '@/services/adminApi'
@@ -20,6 +21,8 @@ export function AdminBranchesPage() {
   const { regulations } = useRegulations()
   const [editRow, setEditRow] = useState<BranchAggregateRow | null>(null)
   const [form, setForm] = useState({ branch: '', regulation: DEFAULT_REG_ID })
+  const [cloneRow, setCloneRow] = useState<BranchAggregateRow | null>(null)
+  const [cloneForm, setCloneForm] = useState({ branch: '', regulation: DEFAULT_REG_ID })
 
   const { data: rows = [], isLoading } = useQuery({
     queryKey: ['admin', 'branches'],
@@ -53,12 +56,38 @@ export function AdminBranchesPage() {
     },
   })
 
+  const cloneMut = useMutation({
+    mutationFn: () => {
+      if (!cloneRow) return Promise.resolve(0)
+      const branch = cloneForm.branch.trim()
+      return adminCloneBranchRow(cloneRow, {
+        branch,
+        regulation: cloneForm.regulation,
+      })
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['admin', 'branches'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'subjects'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'questionSets'] })
+      void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+      setCloneRow(null)
+    },
+  })
+
   function openEdit(row: BranchAggregateRow) {
     setForm({
       branch: row.branch,
       regulation: row.regulation as RegulationId,
     })
     setEditRow(row)
+  }
+
+  function openClone(row: BranchAggregateRow) {
+    setCloneForm({
+      branch: '',
+      regulation: row.regulation as RegulationId,
+    })
+    setCloneRow(row)
   }
 
   return (
@@ -112,6 +141,13 @@ export function AdminBranchesPage() {
                           className="rounded-lg border border-amber-500/40 px-2 py-1 text-xs text-amber-300 hover:bg-amber-500/10"
                         >
                           Edit all
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => openClone(r)}
+                          className="rounded-lg border border-violet-500/40 px-2 py-1 text-xs text-violet-300 hover:bg-violet-500/10"
+                        >
+                          Clone set
                         </button>
                         <button
                           type="button"
@@ -192,6 +228,72 @@ export function AdminBranchesPage() {
           </label>
           {patchMut.isError ? (
             <p className="mt-3 text-sm text-red-300">Update failed. Check permissions.</p>
+          ) : null}
+        </AdminModal>
+      ) : null}
+
+      {cloneRow ? (
+        <AdminModal
+          title="Clone branch group"
+          onClose={() => setCloneRow(null)}
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setCloneRow(null)}
+                className="rounded-lg border border-white/20 px-3 py-2 text-sm text-slate-300"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={cloneMut.isPending || !cloneForm.branch.trim()}
+                onClick={() => void cloneMut.mutate()}
+                className="rounded-lg bg-violet-600 px-3 py-2 text-sm font-semibold text-white disabled:opacity-50"
+              >
+                {cloneMut.isPending ? 'Cloning…' : 'Clone all units'}
+              </button>
+            </>
+          }
+        >
+          <p className="mb-3 text-xs text-slate-500">
+            Creates {cloneRow.questionSetCount} new question set(s) copied from{' '}
+            <span className="font-medium text-slate-300">
+              {cloneRow.regulation.toUpperCase()} / {cloneRow.branch.toUpperCase()}
+            </span>
+            . Pick the branch (and regulation if needed) for every duplicated unit in one step. View and
+            download counts start at zero on the copies.
+          </p>
+          <label className="block">
+            <span className="text-xs text-slate-500">Target branch code (e.g. ece)</span>
+            <input
+              value={cloneForm.branch}
+              onChange={(e) => setCloneForm((f) => ({ ...f, branch: e.target.value }))}
+              placeholder="Must differ from source unless regulation differs"
+              className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white placeholder:text-slate-600"
+            />
+          </label>
+          <label className="mt-3 block">
+            <span className="text-xs text-slate-500">Regulation for cloned sets</span>
+            <select
+              value={cloneForm.regulation}
+              onChange={(e) =>
+                setCloneForm((f) => ({ ...f, regulation: e.target.value as RegulationId }))
+              }
+              className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
+            >
+              {regulations.map((x) => (
+                <option key={x.id} value={x.id}>
+                  {x.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {cloneMut.isError ? (
+            <p className="mt-3 text-sm text-red-300">
+              {(cloneMut.error as Error)?.message ??
+                'Clone failed. Check permissions or choose a different branch/regulation.'}
+            </p>
           ) : null}
         </AdminModal>
       ) : null}

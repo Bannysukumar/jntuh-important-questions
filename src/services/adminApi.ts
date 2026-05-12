@@ -13,6 +13,7 @@ import { DEFAULT_REGULATIONS, SITE_NAME } from '@/lib/constants'
 import { getFirebaseDb, isFirebaseConfigured } from '@/services/firebase/config'
 import { adminFetchAllComments } from '@/services/commentsApi'
 import {
+  adminCreateQuestionSet,
   adminDeleteQuestionSet,
   adminListAllQuestionSets,
   adminSaveQuestionSet,
@@ -436,6 +437,62 @@ export async function adminBulkDeleteByBranchRow(row: BranchAggregateRow): Promi
     await adminDeleteQuestionSet(q.id)
   }
   return targets.length
+}
+
+/**
+ * Duplicate every question set under this regulation+branch into new documents.
+ * Target branch (and optional regulation) must differ from the source so URLs stay unambiguous.
+ */
+export async function adminCloneBranchRow(
+  row: BranchAggregateRow,
+  options: { branch: string; regulation: RegulationId },
+): Promise<number> {
+  const newBranch = options.branch.trim().toLowerCase()
+  const newReg = options.regulation
+  if (
+    newBranch === row.branch.toLowerCase() &&
+    newReg === row.regulation
+  ) {
+    throw new Error('Choose a different branch or regulation than the source.')
+  }
+  if (!newBranch) {
+    throw new Error('Enter a target branch code.')
+  }
+
+  const sets = await adminListAllQuestionSets()
+  const targets = sets.filter(
+    (q) =>
+      q.regulation === row.regulation && q.branch.toLowerCase() === row.branch.toLowerCase(),
+  )
+
+  let n = 0
+  for (const q of targets) {
+    await adminCreateQuestionSet({
+      title: q.title,
+      regulation: newReg,
+      branch: newBranch,
+      year: q.year,
+      semester: q.semester,
+      subjectName: q.subjectName,
+      subjectCode: q.subjectCode,
+      unitNumber: q.unitNumber,
+      questions: [...q.questions],
+      tags: [...q.tags],
+      keywords: [...q.keywords],
+      pdfUrl: q.pdfUrl,
+      featured: q.featured,
+      important: q.important,
+      popular: q.popular,
+      showOnHome: q.showOnHome,
+      downloadCount: 0,
+      viewCount: 0,
+      shareCount: 0,
+      status: q.status,
+      createdBy: q.createdBy,
+    })
+    n++
+  }
+  return n
 }
 
 /** Public read for home page (no auth). Empty `homeBranchIds` = show all branches. */
