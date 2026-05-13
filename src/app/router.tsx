@@ -3,38 +3,74 @@ import { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate } from 'react-router-dom'
 import { RootLayout } from '@/components/layout/RootLayout'
 import { MainLayout } from '@/components/layout/MainLayout'
-import { HomePage } from '@/pages/HomePage'
-import { SearchPage } from '@/pages/SearchPage'
-import { UnitQuestionPage } from '@/pages/UnitQuestionPage'
-import { FavoritesPage } from '@/pages/FavoritesPage'
-import { LoginGatePage } from '@/pages/LoginGatePage'
-import { ProfilePage } from '@/pages/ProfilePage'
-import { AboutPage } from '@/pages/AboutPage'
-import { HelpCenterPage } from '@/pages/HelpCenterPage'
-import { SiteRatingsPage } from '@/pages/SiteRatingsPage'
-import { PrivacyPolicyPage } from '@/pages/PrivacyPolicyPage'
-import { TermsOfServicePage } from '@/pages/TermsOfServicePage'
-import { DisclaimerPage } from '@/pages/DisclaimerPage'
-import { BlogIndexPage } from '@/pages/BlogIndexPage'
-import { BlogPostPage } from '@/pages/BlogPostPage'
 import { AdminRoute } from '@/pages/admin/AdminRoute'
-import { AdminAnalyticsPage } from '@/pages/admin/AdminAnalyticsPage'
-import { AdminBackupPage } from '@/pages/admin/AdminBackupPage'
-import { AdminBranchesPage } from '@/pages/admin/AdminBranchesPage'
-import { AdminCommentsPage } from '@/pages/admin/AdminCommentsPage'
-import { AdminFeedbackPage } from '@/pages/admin/AdminFeedbackPage'
-import { AdminHomeLayoutPage } from '@/pages/admin/AdminHomeLayoutPage'
-import { AdminRegulationsPage } from '@/pages/admin/AdminRegulationsPage'
-import { AdminDashboardPage } from '@/pages/admin/AdminDashboardPage'
-import { AdminQuestionCreatePage, AdminQuestionEditPage } from '@/pages/admin/AdminQuestionEditorPage'
-import { AdminQuestionsPage } from '@/pages/admin/AdminQuestionsPage'
-import { AdminSEOPage } from '@/pages/admin/AdminSEOPage'
-import { AdminSettingsPage } from '@/pages/admin/AdminSettingsPage'
-import { AdminSubjectsPage } from '@/pages/admin/AdminSubjectsPage'
-import { AdminUsersPage } from '@/pages/admin/AdminUsersPage'
+
+const HomePage = lazy(() => import('@/pages/HomePage').then((m) => ({ default: m.HomePage })))
+const SearchPage = lazy(() => import('@/pages/SearchPage').then((m) => ({ default: m.SearchPage })))
+const UnitQuestionPage = lazy(() =>
+  import('@/pages/UnitQuestionPage').then((m) => ({ default: m.UnitQuestionPage })),
+)
+const FavoritesPage = lazy(() => import('@/pages/FavoritesPage').then((m) => ({ default: m.FavoritesPage })))
+const LoginGatePage = lazy(() => import('@/pages/LoginGatePage').then((m) => ({ default: m.LoginGatePage })))
+const ProfilePage = lazy(() => import('@/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const AboutPage = lazy(() => import('@/pages/AboutPage').then((m) => ({ default: m.AboutPage })))
+const HelpCenterPage = lazy(() => import('@/pages/HelpCenterPage').then((m) => ({ default: m.HelpCenterPage })))
+const SiteRatingsPage = lazy(() => import('@/pages/SiteRatingsPage').then((m) => ({ default: m.SiteRatingsPage })))
+const PrivacyPolicyPage = lazy(() =>
+  import('@/pages/PrivacyPolicyPage').then((m) => ({ default: m.PrivacyPolicyPage })),
+)
+const TermsOfServicePage = lazy(() =>
+  import('@/pages/TermsOfServicePage').then((m) => ({ default: m.TermsOfServicePage })),
+)
+const DisclaimerPage = lazy(() => import('@/pages/DisclaimerPage').then((m) => ({ default: m.DisclaimerPage })))
+const BlogIndexPage = lazy(() => import('@/pages/BlogIndexPage').then((m) => ({ default: m.BlogIndexPage })))
+const BlogPostPage = lazy(() => import('@/pages/BlogPostPage').then((m) => ({ default: m.BlogPostPage })))
 
 const AdminLayout = lazy(() =>
   import('@/pages/admin/AdminLayout').then((m) => ({ default: m.AdminLayout })),
+)
+const AdminDashboardPage = lazy(() =>
+  import('@/pages/admin/AdminDashboardPage').then((m) => ({ default: m.AdminDashboardPage })),
+)
+const AdminHomeLayoutPage = lazy(() =>
+  import('@/pages/admin/AdminHomeLayoutPage').then((m) => ({ default: m.AdminHomeLayoutPage })),
+)
+const AdminRegulationsPage = lazy(() =>
+  import('@/pages/admin/AdminRegulationsPage').then((m) => ({ default: m.AdminRegulationsPage })),
+)
+const AdminQuestionCreatePage = lazy(() =>
+  import('@/pages/admin/AdminQuestionEditorPage').then((m) => ({ default: m.AdminQuestionCreatePage })),
+)
+const AdminQuestionEditPage = lazy(() =>
+  import('@/pages/admin/AdminQuestionEditorPage').then((m) => ({ default: m.AdminQuestionEditPage })),
+)
+const AdminQuestionsPage = lazy(() =>
+  import('@/pages/admin/AdminQuestionsPage').then((m) => ({ default: m.AdminQuestionsPage })),
+)
+const AdminSubjectsPage = lazy(() =>
+  import('@/pages/admin/AdminSubjectsPage').then((m) => ({ default: m.AdminSubjectsPage })),
+)
+const AdminBranchesPage = lazy(() =>
+  import('@/pages/admin/AdminBranchesPage').then((m) => ({ default: m.AdminBranchesPage })),
+)
+const AdminCommentsPage = lazy(() =>
+  import('@/pages/admin/AdminCommentsPage').then((m) => ({ default: m.AdminCommentsPage })),
+)
+const AdminFeedbackPage = lazy(() =>
+  import('@/pages/admin/AdminFeedbackPage').then((m) => ({ default: m.AdminFeedbackPage })),
+)
+const AdminUsersPage = lazy(() =>
+  import('@/pages/admin/AdminUsersPage').then((m) => ({ default: m.AdminUsersPage })),
+)
+const AdminAnalyticsPage = lazy(() =>
+  import('@/pages/admin/AdminAnalyticsPage').then((m) => ({ default: m.AdminAnalyticsPage })),
+)
+const AdminSEOPage = lazy(() => import('@/pages/admin/AdminSEOPage').then((m) => ({ default: m.AdminSEOPage })))
+const AdminSettingsPage = lazy(() =>
+  import('@/pages/admin/AdminSettingsPage').then((m) => ({ default: m.AdminSettingsPage })),
+)
+const AdminBackupPage = lazy(() =>
+  import('@/pages/admin/AdminBackupPage').then((m) => ({ default: m.AdminBackupPage })),
 )
 
 function AdminFallback() {

@@ -1,5 +1,7 @@
+import { Suspense } from 'react'
 import { Helmet } from 'react-helmet-async'
 import { NavLink, Outlet } from 'react-router-dom'
+import { PageRouteFallback } from '@/components/layout/PageRouteFallback'
 import { useAuth } from '@/contexts/AuthContext'
 
 const modules: {
@@ -167,7 +169,9 @@ export function AdminLayout() {
         </aside>
 
         <main className="relative flex-1 overflow-x-hidden px-4 py-8 sm:px-8 lg:px-10">
-          <Outlet />
+          <Suspense fallback={<PageRouteFallback variant="dark" />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

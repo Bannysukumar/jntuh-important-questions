@@ -9,7 +9,21 @@ import { ThemeProvider } from '@/contexts/ThemeContext'
 import { initFirebaseAnalytics } from '@/services/firebase/config'
 import './index.css'
 
-initFirebaseAnalytics()
+function scheduleInitFirebaseAnalytics() {
+  const run = () => {
+    try {
+      initFirebaseAnalytics()
+    } catch {
+      /* dev / missing env */
+    }
+  }
+  if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+    window.requestIdleCallback(run, { timeout: 4000 })
+  } else {
+    setTimeout(run, 0)
+  }
+}
+scheduleInitFirebaseAnalytics()
 
 const queryClient = new QueryClient({
   defaultOptions: {

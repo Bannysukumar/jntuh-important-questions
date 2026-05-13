@@ -9,21 +9,40 @@
       content="Free JNTUH important questions prepared by analyzing previous years' Regular and Supplementary exams. Unit-wise PDFs with up to 96% historical accuracy and continuous updates before every exam."
     />
     <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
-    <!-- Google tag (gtag.js) — GA4 https://jntuh-iq.vercel.app/ -->
+    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
+    <!-- Google tag (gtag.js) — GA4: defer config until after first paint -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-LZH26V2Q9T"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-LZH26V2Q9T');
+      window.addEventListener(
+        'load',
+        function () {
+          gtag('js', new Date());
+          gtag('config', 'G-LZH26V2Q9T');
+        },
+        { once: true }
+      );
     </script>
-    <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&display=swap"
+    />
+    <link
       href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Fraunces:ital,opsz,wght@0,9..144,600;0,9..144,700;1,9..144,600&display=swap"
+      />
+    </noscript>
     <title>JNTUH Important Questions | Free unit-wise PDFs &amp; 96% accuracy track record</title>
   </head>
   <body>

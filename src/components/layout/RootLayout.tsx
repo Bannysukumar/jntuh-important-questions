@@ -1,4 +1,6 @@
+import { Suspense } from 'react'
 import { Outlet } from 'react-router-dom'
+import { PageRouteFallback } from '@/components/layout/PageRouteFallback'
 import { GtagRouteListener } from '@/components/analytics/GtagRouteListener'
 import { MicrosoftClarity } from '@/components/analytics/MicrosoftClarity'
 import { AuthModal } from '@/components/auth/AuthModal'
@@ -9,7 +11,9 @@ export function RootLayout() {
     <AuthModalProvider>
       <GtagRouteListener />
       <MicrosoftClarity />
-      <Outlet />
+      <Suspense fallback={<PageRouteFallback />}>
+        <Outlet />
+      </Suspense>
       <AuthModal />
     </AuthModalProvider>
   )

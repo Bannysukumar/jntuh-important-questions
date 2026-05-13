@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { Link, Outlet, useLocation } from 'react-router-dom'
 import { AppSidebar } from './AppSidebar'
 import { StickySearchBar } from '../search/StickySearchBar'
 import { ThemeToggle } from './ThemeToggle'
 import { useAuth } from '../../contexts/AuthContext'
+import { PageRouteFallback } from '@/components/layout/PageRouteFallback'
 import { FOOTER_TAGLINE, SITE_SIDEBAR_TAGLINE } from '@/lib/siteMessaging'
 
 export function MainLayout() {
@@ -137,7 +138,9 @@ export function MainLayout() {
         {location.pathname === '/search' ? <StickySearchBar /> : null}
 
         <main className="relative mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
-          <Outlet />
+          <Suspense fallback={<PageRouteFallback />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         <footer className="relative border-t border-slate-200/80 bg-white/60 px-4 py-8 text-center text-xs text-slate-500 backdrop-blur dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-500">
