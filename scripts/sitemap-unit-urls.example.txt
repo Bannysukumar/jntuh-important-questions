@@ -1,6 +1,14 @@
 # Optional: one canonical path per line (must start with /).
 # Copy to sitemap-unit-urls.txt (gitignored) and list published unit URLs
-# so sitemap-units.xml and the sitemap index include them at build time.
+# so sitemap-units-part-*.xml and the sitemap index include them at build time.
+#
+# Firestore (recommended): from project root, with a service account JSON path set:
+#   set GOOGLE_APPLICATION_CREDENTIALS=C:\path\to\service-account.json
+#   npm run sitemap:firestore
+# That writes scripts/sitemap-unit-urls.generated.txt (+ facet hubs JSON).
+# Then: npm run sitemap   (or npm run build — prebuild runs sitemap automatically)
+#
+# Many shard files: lower SITEMAP_UNIT_CHUNK_SIZE / SITEMAP_FACET_CHUNK_SIZE when running build-sitemaps.
 #
 # Examples (replace with your real regulation/branch/semester/subject slugs):
 # /r22/cse/2-1/digital-logic-design/unit-3-important-questions

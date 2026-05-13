@@ -16,6 +16,14 @@ dist-ssr
 
 # Local-only unit URL list for sitemap-units.xml (see scripts/sitemap-unit-urls.example.txt)
 scripts/sitemap-unit-urls.txt
+scripts/sitemap-unit-urls.generated.txt
+scripts/sitemap-facet-urls.generated.json
+scripts/.secrets/
+*firebase-adminsdk*.json
+
+# Generated sitemap shards (from `npm run sitemap` / prebuild — regenerate in CI or locally)
+public/sitemap-units-part-*.xml
+public/sitemap-facets-part-*.xml
 
 # Editor directories and files
 .vscode/*

@@ -2,14 +2,18 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>https://jntuh-iq.vercel.app/sitemap-static.xml</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-05-13</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://jntuh-iq.vercel.app/sitemap-subjects.xml</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-05-13</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://jntuh-iq.vercel.app/sitemap-blog.xml</loc>
-    <lastmod>2026-05-12</lastmod>
+    <lastmod>2026-05-13</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://jntuh-iq.vercel.app/sitemap-units.xml</loc>
+    <lastmod>2026-05-13</lastmod>
   </sitemap>
 </sitemapindex>

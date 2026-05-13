@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "sitemap": "node scripts/build-sitemaps.mjs",
+    "sitemap:wide": "node scripts/build-sitemaps-wide.mjs",
+    "sitemap:firestore": "node scripts/fetch-firestore-sitemap-data.mjs",
     "dev": "vite",
     "prebuild": "node scripts/build-sitemaps.mjs && node scripts/generate-pwa-icons.mjs",
     "build": "tsc -b && vite build",
@@ -33,6 +35,7 @@
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
+    "firebase-admin": "^13.6.0",
     "globals": "^17.5.0",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.3.0",

@@ -1,6 +1,17 @@
 /**
  * Writes UTF-8 sitemaps (no BOM) and robots.txt before Vite copies `public/` to `dist/`.
  * Set VITE_SITE_URL for production canonical origin (e.g. https://yourdomain.com).
+ *
+ * Sharding (optional, for large sites):
+ *   SITEMAP_UNIT_CHUNK_SIZE   — URLs per sitemap-units-part-NNNN.xml (default 300)
+ *   SITEMAP_FACET_CHUNK_SIZE  — URLs per sitemap-facets-part-NNNN.xml (default 400)
+ *
+ * Data sources for units (merged, de-duplicated):
+ *   scripts/sitemap-unit-urls.txt            — manual (optional, gitignored)
+ *   scripts/sitemap-unit-urls.generated.txt  — from `npm run sitemap:firestore`
+ *
+ * Facet “index” URLs (search hub links), optional:
+ *   scripts/sitemap-facet-urls.generated.json — from `npm run sitemap:firestore`
  */
 import fs from 'node:fs'
 import path from 'node:path'
@@ -13,6 +24,9 @@ const scriptsDir = path.join(root, 'scripts')
 
 const ORIGIN = (process.env.VITE_SITE_URL || 'https://jntuh-iq.vercel.app').replace(/\/$/, '')
 const TODAY = new Date().toISOString().slice(0, 10)
+
+const UNIT_CHUNK = Math.max(1, Number.parseInt(process.env.SITEMAP_UNIT_CHUNK_SIZE || '300', 10) || 300)
+const FACET_CHUNK = Math.max(1, Number.parseInt(process.env.SITEMAP_FACET_CHUNK_SIZE || '400', 10) || 400)
 
 /** Slugs parsed from `src/lib/blogPosts.ts` (each post `slug: '…'`). */
 function readBlogSlugs() {
@@ -55,6 +69,40 @@ function sitemapIndex(parts) {
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>\n`
 }
 
+function readPathLines(filePath) {
+  if (!fs.existsSync(filePath)) return []
+  return fs
+    .readFileSync(filePath, 'utf8')
+    .split(/\r?\n/)
+    .map((l) => l.replace(/#.*$/, '').trim())
+    .filter((l) => l.startsWith('/'))
+}
+
+function readGeneratedFacetPaths() {
+  const j = path.join(scriptsDir, 'sitemap-facet-urls.generated.json')
+  if (!fs.existsSync(j)) return []
+  try {
+    const data = JSON.parse(fs.readFileSync(j, 'utf8'))
+    const arr = Array.isArray(data.paths) ? data.paths : []
+    return arr.filter((p) => typeof p === 'string' && p.startsWith('/search?'))
+  } catch {
+    return []
+  }
+}
+
+function removePublicGlob(baseNamePrefix) {
+  if (!fs.existsSync(publicDir)) return
+  for (const name of fs.readdirSync(publicDir)) {
+    if (name.startsWith(baseNamePrefix) && name.endsWith('.xml')) {
+      try {
+        fs.unlinkSync(path.join(publicDir, name))
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+}
+
 // --- sitemap-static.xml (no /search — lives in subjects hub) ---
 const staticEntries = [
   urlEntry(`${ORIGIN}/`, 'daily', '1.0'),
@@ -79,26 +127,63 @@ const blogEntries = [
 ]
 fs.writeFileSync(path.join(publicDir, 'sitemap-blog.xml'), urlset(blogEntries), { encoding: 'utf8' })
 
-// --- sitemap-units.xml (optional: one path per line, must start with /) ---
-const unitListPath = path.join(scriptsDir, 'sitemap-unit-urls.txt')
-let unitEntries = []
-if (fs.existsSync(unitListPath)) {
-  const raw = fs.readFileSync(unitListPath, 'utf8')
-  unitEntries = raw
-    .split(/\r?\n/)
-    .map((l) => l.trim())
-    .filter((l) => l.startsWith('/'))
-    .map((p) => urlEntry(`${ORIGIN}${p}`, 'weekly', '0.85'))
+// --- Unit URLs: manual + Firestore-generated ---
+const manualUnits = readPathLines(path.join(scriptsDir, 'sitemap-unit-urls.txt'))
+const generatedUnits = readPathLines(path.join(scriptsDir, 'sitemap-unit-urls.generated.txt'))
+const unitPathList = [...new Set([...manualUnits, ...generatedUnits])].sort()
+
+removePublicGlob('sitemap-units-part-')
+try {
+  fs.unlinkSync(path.join(publicDir, 'sitemap-units.xml'))
+} catch {
+  /* none */
 }
 
-const unitsPath = path.join(publicDir, 'sitemap-units.xml')
-if (unitEntries.length > 0) {
-  fs.writeFileSync(unitsPath, urlset(unitEntries), { encoding: 'utf8' })
-} else {
-  try {
-    fs.unlinkSync(unitsPath)
-  } catch {
-    /* no previous file */
+const unitIndexLocs = []
+if (unitPathList.length > 0) {
+  const numParts = Math.ceil(unitPathList.length / UNIT_CHUNK)
+  if (numParts === 1) {
+    const entries = unitPathList.map((p) => urlEntry(`${ORIGIN}${p}`, 'weekly', '0.85'))
+    fs.writeFileSync(path.join(publicDir, 'sitemap-units.xml'), urlset(entries), { encoding: 'utf8' })
+    unitIndexLocs.push({ loc: `${ORIGIN}/sitemap-units.xml`, lastmod: TODAY })
+  } else {
+    let part = 0
+    for (let i = 0; i < unitPathList.length; i += UNIT_CHUNK) {
+      part += 1
+      const chunk = unitPathList.slice(i, i + UNIT_CHUNK)
+      const entries = chunk.map((p) => urlEntry(`${ORIGIN}${p}`, 'weekly', '0.85'))
+      const name = `sitemap-units-part-${String(part).padStart(4, '0')}.xml`
+      fs.writeFileSync(path.join(publicDir, name), urlset(entries), { encoding: 'utf8' })
+      unitIndexLocs.push({ loc: `${ORIGIN}/${name}`, lastmod: TODAY })
+    }
+  }
+}
+
+// --- Facet “index” URLs (search filters from Firestore export) ---
+removePublicGlob('sitemap-facets-part-')
+try {
+  fs.unlinkSync(path.join(publicDir, 'sitemap-facets.xml'))
+} catch {
+  /* none */
+}
+const facetPathList = [...new Set(readGeneratedFacetPaths())].sort()
+const facetIndexLocs = []
+if (facetPathList.length > 0) {
+  const numFacetParts = Math.ceil(facetPathList.length / FACET_CHUNK)
+  if (numFacetParts === 1) {
+    const entries = facetPathList.map((p) => urlEntry(`${ORIGIN}${p}`, 'weekly', '0.55'))
+    fs.writeFileSync(path.join(publicDir, 'sitemap-facets.xml'), urlset(entries), { encoding: 'utf8' })
+    facetIndexLocs.push({ loc: `${ORIGIN}/sitemap-facets.xml`, lastmod: TODAY })
+  } else {
+    let part = 0
+    for (let i = 0; i < facetPathList.length; i += FACET_CHUNK) {
+      part += 1
+      const chunk = facetPathList.slice(i, i + FACET_CHUNK)
+      const entries = chunk.map((p) => urlEntry(`${ORIGIN}${p}`, 'weekly', '0.55'))
+      const name = `sitemap-facets-part-${String(part).padStart(4, '0')}.xml`
+      fs.writeFileSync(path.join(publicDir, name), urlset(entries), { encoding: 'utf8' })
+      facetIndexLocs.push({ loc: `${ORIGIN}/${name}`, lastmod: TODAY })
+    }
   }
 }
 
@@ -107,10 +192,10 @@ const indexParts = [
   { loc: `${ORIGIN}/sitemap-static.xml`, lastmod: TODAY },
   { loc: `${ORIGIN}/sitemap-subjects.xml`, lastmod: TODAY },
   { loc: `${ORIGIN}/sitemap-blog.xml`, lastmod: TODAY },
+  ...unitIndexLocs,
+  ...facetIndexLocs,
 ]
-if (unitEntries.length > 0) {
-  indexParts.push({ loc: `${ORIGIN}/sitemap-units.xml`, lastmod: TODAY })
-}
+
 const indexXml = sitemapIndex(indexParts)
 fs.writeFileSync(path.join(publicDir, 'sitemap.xml'), indexXml, { encoding: 'utf8' })
 
@@ -133,7 +218,19 @@ const wrote = [
   'sitemap-static.xml',
   'sitemap-subjects.xml',
   'sitemap-blog.xml',
-  ...(unitEntries.length > 0 ? ['sitemap-units.xml'] : []),
+  ...unitIndexLocs.map((x) => x.loc.replace(ORIGIN + '/', '')),
+  ...facetIndexLocs.map((x) => x.loc.replace(ORIGIN + '/', '')),
   'robots.txt',
 ]
-console.log('[build-sitemaps] Wrote', wrote.join(', '), 'for', ORIGIN)
+console.log('[build-sitemaps] Wrote', wrote.length, 'artifacts for', ORIGIN)
+console.log(
+  '[build-sitemaps] Unit parts:',
+  unitIndexLocs.length,
+  '(chunk',
+  UNIT_CHUNK,
+  ') · Facet index parts:',
+  facetIndexLocs.length,
+  '(chunk',
+  FACET_CHUNK,
+  ')',
+)
