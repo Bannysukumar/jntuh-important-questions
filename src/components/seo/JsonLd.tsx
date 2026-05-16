@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async'
 import { SITE_NAME, SITE_URL } from '@/lib/constants'
 import { JSON_LD_ORGANIZATION_DESCRIPTION } from '@/lib/siteMessaging'
+import { formatDocumentTitle } from '@/lib/seoTitles'
 
 const origin = () => SITE_URL.replace(/\/$/, '')
 
@@ -79,10 +80,11 @@ export function JsonLdArticle(input: {
   dateModified: string
 }) {
   const url = `${origin()}${input.path}`
+  const headline = formatDocumentTitle(input.title)
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Article',
-    headline: input.title,
+    headline,
     description: input.description,
     datePublished: input.datePublished,
     dateModified: input.dateModified,
@@ -112,10 +114,11 @@ export function JsonLdLearningResource(input: {
   educationalLevel?: string
 }) {
   const url = `${origin()}${input.path}`
+  const name = formatDocumentTitle(input.name)
   const data = {
     '@context': 'https://schema.org',
     '@type': 'LearningResource',
-    name: input.name,
+    name,
     description: input.description,
     url,
     isAccessibleForFree: true,

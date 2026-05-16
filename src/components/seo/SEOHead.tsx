@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async'
 import { SITE_NAME, SITE_URL } from '@/lib/constants'
 import { OG_IMAGE_ALT } from '@/lib/siteMessaging'
+import { formatDocumentTitle } from '@/lib/seoTitles'
 
 export interface SEOHeadProps {
   title: string
@@ -31,12 +32,6 @@ function clampMetaDescription(raw: string, max = 160): string {
   return `${base.trimEnd()}…`
 }
 
-/** Bing guidance: prefer under 70 visible characters for the title tag (full string often includes brand). */
-function clampDocumentTitle(fullTitle: string, max = 69): string {
-  if (fullTitle.length <= max) return fullTitle
-  return `${fullTitle.slice(0, max - 1).trimEnd()}…`
-}
-
 export function SEOHead({
   title,
   description,
@@ -50,8 +45,7 @@ export function SEOHead({
 }: SEOHeadProps) {
   const path = canonicalPath.startsWith('/') ? canonicalPath : `/${canonicalPath}`
   const canonical = `${SITE_URL.replace(/\/$/, '')}${path}`
-  const fullTitle = title.includes(SITE_NAME) ? title : `${title} | ${SITE_NAME}`
-  const documentTitle = clampDocumentTitle(fullTitle)
+  const documentTitle = formatDocumentTitle(title)
   const metaDescription = clampMetaDescription(description)
   const imageUrl = ogImage ?? defaultOgImage()
   const verification = import.meta.env.VITE_GOOGLE_SITE_VERIFICATION
