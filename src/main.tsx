@@ -44,3 +44,7 @@ createRoot(document.getElementById('root')!).render(
     </HelmetProvider>
   </StrictMode>,
 )
+
+requestAnimationFrame(() => {
+  document.getElementById('seo-bootstrap-h1')?.remove()
+})

@@ -31,8 +31,8 @@ function clampMetaDescription(raw: string, max = 160): string {
   return `${base.trimEnd()}…`
 }
 
-/** Keep document title in a SERP-friendly band (full string includes brand suffix). */
-function clampDocumentTitle(fullTitle: string, max = 60): string {
+/** Bing guidance: prefer under 70 visible characters for the title tag (full string often includes brand). */
+function clampDocumentTitle(fullTitle: string, max = 69): string {
   if (fullTitle.length <= max) return fullTitle
   return `${fullTitle.slice(0, max - 1).trimEnd()}…`
 }

@@ -9,7 +9,7 @@ import {
 } from '@/components/seo/JsonLd'
 import { SEOHead } from '@/components/seo/SEOHead'
 import { getHomeSeoFaqs } from '@/lib/homeFaqSeo'
-import { BRANCHES, SITE_NAME } from '@/lib/constants'
+import { BRANCHES } from '@/lib/constants'
 import {
   HOME_CTA_PRIMARY_LABEL,
   HOME_CTA_SECONDARY_LABEL,
@@ -157,7 +157,7 @@ export function HomePage() {
   return (
     <>
       <SEOHead
-        title={`${SITE_NAME} — free unit-wise important questions | up to 96% accuracy`}
+        title="JNTUH Important Questions | Free unit-wise PDFs & exam prep"
         description={META_DESCRIPTION_DEFAULT}
         canonicalPath="/"
         keywords={[...GLOBAL_SEO_KEYWORDS]}

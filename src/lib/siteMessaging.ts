@@ -1,8 +1,8 @@
 import { SITE_NAME } from '@/lib/constants'
 
-/** Primary meta description — aligned with About Us mission (SEO + consistency). */
+/** Primary meta description — aligned with About Us mission (SEO + consistency). Aim ~155 chars for Bing/Google snippets. */
 export const META_DESCRIPTION_DEFAULT =
-  "Free JNTUH important questions prepared by analyzing previous years' Regular and Supplementary exams. Unit-wise PDFs with up to 96% historical accuracy and continuous updates before every exam."
+  'Free JNTUH B.Tech important questions from Regular & Supplementary paper analysis — unit-wise PDFs, strong historical accuracy, refreshed before exams.'
 
 /** Footer line under legal links. */
 export const FOOTER_TAGLINE =
