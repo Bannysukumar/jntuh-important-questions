@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AdminModal } from '@/components/admin/AdminModal'
 import { AdminPageHeader } from '@/components/admin/AdminPageHeader'
@@ -18,6 +18,7 @@ const DEFAULT_REG_ID = (DEFAULT_REGULATIONS.find((x) => x.id === 'r22') ?? DEFAU
 export function AdminSubjectsPage() {
   const qc = useQueryClient()
   const { regulations } = useRegulations()
+  const [search, setSearch] = useState('')
   const [editRow, setEditRow] = useState<SubjectAggregateRow | null>(null)
   const [form, setForm] = useState({
     subjectName: '',
@@ -31,6 +32,19 @@ export function AdminSubjectsPage() {
     queryKey: ['admin', 'subjects'],
     queryFn: fetchSubjectAggregates,
   })
+
+  const filtered = useMemo(() => {
+    const t = search.trim().toLowerCase()
+    if (!t) return rows
+    return rows.filter(
+      (r) =>
+        r.subjectName.toLowerCase().includes(t) ||
+        r.subjectCode.toLowerCase().includes(t) ||
+        r.regulation.toLowerCase().includes(t) ||
+        r.branch.toLowerCase().includes(t) ||
+        r.semester.toLowerCase().includes(t),
+    )
+  }, [rows, search])
 
   const patchMut = useMutation({
     mutationFn: () => {
@@ -94,12 +108,21 @@ export function AdminSubjectsPage() {
         title="Subjects"
         description="Each row groups all unit documents for one subject (regulation · branch · semester · code). Edit updates every matching question set; delete removes all units for that subject."
         actions={
-          <Link
-            to="/admin/questions/new"
-            className="rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white"
-          >
-            + New subject / unit
-          </Link>
+          <>
+            <Link
+              to="/admin/questions/new"
+              className="rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 px-4 py-2 text-sm font-semibold text-white"
+            >
+              + New subject / unit
+            </Link>
+            <input
+              type="search"
+              placeholder="Search subject, code, regulation, branch, semester…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full min-w-[200px] rounded-xl border border-white/15 bg-slate-900/80 px-4 py-2 text-sm text-white placeholder:text-slate-500 focus:border-cyan-500/50 focus:outline-none focus:ring-1 focus:ring-cyan-500/40 sm:w-80"
+            />
+          </>
         }
       />
 
@@ -121,7 +144,7 @@ export function AdminSubjectsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {rows.map((r) => (
+                {filtered.map((r) => (
                   <tr key={r.key} className="hover:bg-white/[0.02]">
                     <td className="px-4 py-3 font-medium text-slate-100">{r.subjectName}</td>
                     <td className="px-4 py-3 text-slate-400">{r.subjectCode}</td>
@@ -167,6 +190,13 @@ export function AdminSubjectsPage() {
               </tbody>
             </table>
           </div>
+          {filtered.length === 0 ? (
+            <p className="p-8 text-center text-slate-500">
+              {rows.length === 0
+                ? 'No subjects yet. Create a question set to add one.'
+                : 'No subjects match your search.'}
+            </p>
+          ) : null}
         </div>
       )}
 

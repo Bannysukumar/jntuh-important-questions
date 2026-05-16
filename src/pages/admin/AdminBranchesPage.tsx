@@ -70,6 +70,8 @@ export function AdminBranchesPage() {
       void qc.invalidateQueries({ queryKey: ['admin', 'subjects'] })
       void qc.invalidateQueries({ queryKey: ['admin', 'questionSets'] })
       void qc.invalidateQueries({ queryKey: ['admin', 'stats'] })
+      void qc.invalidateQueries({ queryKey: ['homePublishedCatalog'] })
+      void qc.invalidateQueries({ queryKey: ['featured'] })
       setCloneRow(null)
     },
   })

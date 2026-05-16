@@ -8,8 +8,11 @@ import {
   limit,
   query,
   setDoc,
+  startAfter,
   updateDoc,
   where,
+  writeBatch,
+  type QueryDocumentSnapshot,
 } from 'firebase/firestore'
 import { SAMPLE_QUESTION_SETS } from '@/services/mock/sampleData'
 import { releaseQuestionViewSlot, reserveQuestionViewSlot } from '@/lib/questionViewDedupe'
@@ -25,7 +28,7 @@ function mapDoc(id: string, data: Record<string, unknown>): QuestionSet {
     title: String(data.title ?? ''),
     slug: String(data.slug ?? ''),
     regulation: String(data.regulation ?? 'r22').toLowerCase() as RegulationId,
-    branch: String(data.branch ?? ''),
+    branch: String(data.branch ?? '').toLowerCase(),
     year: String(data.year ?? ''),
     semester: String(data.semester ?? ''),
     subjectName: String(data.subjectName ?? ''),
@@ -295,24 +298,13 @@ export type AdminNewQuestionSetInput = Omit<
   'id' | 'slug' | 'createdAt' | 'updatedAt'
 > & { id?: string }
 
-export async function adminCreateQuestionSet(input: AdminNewQuestionSetInput): Promise<string> {
-  const now = new Date().toISOString()
+function buildNewQuestionSetDoc(input: AdminNewQuestionSetInput, id: string, now: string): QuestionSet {
   const slug = computeQuestionSlug(input.subjectName, input.unitNumber)
-  let id = input.id
-  if (!id) {
-    if (!isFirebaseConfigured()) {
-      id = `local-${crypto.randomUUID()}`
-    } else {
-      const db = getFirebaseDb()
-      id = doc(collection(db, COLLECTION)).id
-    }
-  }
-
-  const docData: QuestionSet = {
+  return {
     id,
     title: input.title,
     slug,
-    regulation: input.regulation,
+    regulation: String(input.regulation).toLowerCase() as RegulationId,
     branch: input.branch.trim().toLowerCase(),
     year: input.year,
     semester: input.semester.trim(),
@@ -335,6 +327,21 @@ export async function adminCreateQuestionSet(input: AdminNewQuestionSetInput): P
     shareCount: input.shareCount,
     status: input.status,
   }
+}
+
+export async function adminCreateQuestionSet(input: AdminNewQuestionSetInput): Promise<string> {
+  const now = new Date().toISOString()
+  let id = input.id
+  if (!id) {
+    if (!isFirebaseConfigured()) {
+      id = `local-${crypto.randomUUID()}`
+    } else {
+      const db = getFirebaseDb()
+      id = doc(collection(db, COLLECTION)).id
+    }
+  }
+
+  const docData = buildNewQuestionSetDoc(input, id, now)
 
   if (!isFirebaseConfigured()) {
     SAMPLE_QUESTION_SETS.push(docData)
@@ -346,6 +353,69 @@ export async function adminCreateQuestionSet(input: AdminNewQuestionSetInput): P
     JSON.parse(JSON.stringify(docData)) as Record<string, unknown>,
   )
   return id
+}
+
+const ADMIN_LIST_PAGE_SIZE = 500
+const FIRESTORE_BATCH_WRITE_LIMIT = 400
+
+/** All question sets for one regulation + branch (paginated; not capped by site-wide totals). */
+export async function adminListQuestionSetsForBranch(
+  regulation: string,
+  branch: string,
+): Promise<QuestionSet[]> {
+  const reg = regulation.toLowerCase().trim()
+  const branchKeys = [...new Set([branch.toLowerCase().trim(), branch.trim()].filter(Boolean))]
+  if (!isFirebaseConfigured()) {
+    return SAMPLE_QUESTION_SETS.filter(
+      (q) =>
+        q.regulation.toLowerCase() === reg && branchKeys.includes(q.branch.toLowerCase()),
+    )
+  }
+  const db = getFirebaseDb()
+  const byId = new Map<string, QuestionSet>()
+  for (const br of branchKeys) {
+    let last: QueryDocumentSnapshot | undefined
+    while (true) {
+      const q = last
+        ? query(collection(db, COLLECTION), where('branch', '==', br), startAfter(last), limit(ADMIN_LIST_PAGE_SIZE))
+        : query(collection(db, COLLECTION), where('branch', '==', br), limit(ADMIN_LIST_PAGE_SIZE))
+      const snap = await getDocs(q)
+      for (const d of snap.docs) {
+        const mapped = mapDoc(d.id, d.data())
+        if (mapped.regulation.toLowerCase() === reg) byId.set(mapped.id, mapped)
+      }
+      if (snap.docs.length < ADMIN_LIST_PAGE_SIZE) break
+      last = snap.docs[snap.docs.length - 1]
+    }
+  }
+  return [...byId.values()]
+}
+
+/** Create many question sets (Firestore batched writes; local mode sequential). */
+export async function adminBatchCreateQuestionSets(inputs: AdminNewQuestionSetInput[]): Promise<number> {
+  if (inputs.length === 0) return 0
+  if (!isFirebaseConfigured()) {
+    for (const input of inputs) {
+      await adminCreateQuestionSet(input)
+    }
+    return inputs.length
+  }
+  const db = getFirebaseDb()
+  const now = new Date().toISOString()
+  let total = 0
+  for (let i = 0; i < inputs.length; i += FIRESTORE_BATCH_WRITE_LIMIT) {
+    const chunk = inputs.slice(i, i + FIRESTORE_BATCH_WRITE_LIMIT)
+    const batch = writeBatch(db)
+    for (const input of chunk) {
+      const id = doc(collection(db, COLLECTION)).id
+      const docData = buildNewQuestionSetDoc(input, id, now)
+      const sanitized = JSON.parse(JSON.stringify(docData)) as Record<string, unknown>
+      batch.set(doc(db, COLLECTION, id), sanitized)
+    }
+    await batch.commit()
+    total += chunk.length
+  }
+  return total
 }
 
 /** Replace fields on an existing question set (admin editor). */
@@ -371,14 +441,31 @@ export async function adminSaveQuestionSet(full: QuestionSet): Promise<void> {
   await setDoc(doc(db, COLLECTION, full.id), sanitized, { merge: true })
 }
 
-/** All statuses; requires admin Firestore rules. */
-export async function adminListAllQuestionSets(maxDocs = 500): Promise<QuestionSet[]> {
+/**
+ * All statuses; requires admin Firestore rules.
+ * Paginates through the full collection (default). Pass `maxDocs` to cap (legacy callers).
+ */
+export async function adminListAllQuestionSets(maxDocs?: number): Promise<QuestionSet[]> {
   if (!isFirebaseConfigured()) {
-    return [...SAMPLE_QUESTION_SETS]
+    const all = [...SAMPLE_QUESTION_SETS]
+    return maxDocs !== undefined ? all.slice(0, maxDocs) : all
   }
   const db = getFirebaseDb()
-  const snap = await getDocs(query(collection(db, COLLECTION), limit(maxDocs)))
-  return snap.docs.map((d) => mapDoc(d.id, d.data()))
+  const out: QuestionSet[] = []
+  let last: QueryDocumentSnapshot | undefined
+  while (true) {
+    const q = last
+      ? query(collection(db, COLLECTION), startAfter(last), limit(ADMIN_LIST_PAGE_SIZE))
+      : query(collection(db, COLLECTION), limit(ADMIN_LIST_PAGE_SIZE))
+    const snap = await getDocs(q)
+    out.push(...snap.docs.map((d) => mapDoc(d.id, d.data())))
+    if (snap.docs.length < ADMIN_LIST_PAGE_SIZE) break
+    if (maxDocs !== undefined && out.length >= maxDocs) {
+      return out.slice(0, maxDocs)
+    }
+    last = snap.docs[snap.docs.length - 1]
+  }
+  return maxDocs !== undefined ? out.slice(0, maxDocs) : out
 }
 
 export async function adminPatchQuestionSet(id: string, patch: AdminQuestionPatch): Promise<void> {

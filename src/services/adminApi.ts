@@ -13,9 +13,10 @@ import { DEFAULT_REGULATIONS, inferYearLabelFromSemester, SITE_NAME } from '@/li
 import { getFirebaseDb, isFirebaseConfigured } from '@/services/firebase/config'
 import { adminFetchAllComments } from '@/services/commentsApi'
 import {
-  adminCreateQuestionSet,
+  adminBatchCreateQuestionSets,
   adminDeleteQuestionSet,
   adminListAllQuestionSets,
+  adminListQuestionSetsForBranch,
   adminSaveQuestionSet,
 } from '@/services/questionsApi'
 import type {
@@ -375,6 +376,14 @@ export interface BranchAggregateRow {
   subjectKeys: number
 }
 
+function regulationMatches(a: string, b: string): boolean {
+  return a.toLowerCase().trim() === b.toLowerCase().trim()
+}
+
+function branchMatches(a: string, b: string): boolean {
+  return a.toLowerCase().trim() === b.toLowerCase().trim()
+}
+
 export async function fetchBranchAggregates(): Promise<BranchAggregateRow[]> {
   const sets = await adminListAllQuestionSets()
   const map = new Map<string, { regulation: string; branch: string; sets: Set<string>; subjects: Set<string> }>()
@@ -412,8 +421,8 @@ export async function adminBulkPatchBySubjectRow(
   let n = 0
   for (const q of sets) {
     if (
-      q.regulation === row.regulation &&
-      q.branch.toLowerCase() === row.branch.toLowerCase() &&
+      regulationMatches(q.regulation, row.regulation) &&
+      branchMatches(q.branch, row.branch) &&
       q.semester === row.semester &&
       q.subjectCode.toLowerCase() === row.subjectCode.toLowerCase()
     ) {
@@ -436,8 +445,8 @@ export async function adminBulkDeleteBySubjectRow(row: SubjectAggregateRow): Pro
   const sets = await adminListAllQuestionSets()
   const targets = sets.filter(
     (q) =>
-      q.regulation === row.regulation &&
-      q.branch.toLowerCase() === row.branch.toLowerCase() &&
+      regulationMatches(q.regulation, row.regulation) &&
+      branchMatches(q.branch, row.branch) &&
       q.semester === row.semester &&
       q.subjectCode.toLowerCase() === row.subjectCode.toLowerCase(),
   )
@@ -454,7 +463,7 @@ export async function adminBulkPatchByBranchRow(
   const sets = await adminListAllQuestionSets()
   let n = 0
   for (const q of sets) {
-    if (q.regulation === row.regulation && q.branch.toLowerCase() === row.branch.toLowerCase()) {
+    if (regulationMatches(q.regulation, row.regulation) && branchMatches(q.branch, row.branch)) {
       const merged: QuestionSet = {
         ...q,
         branch: (patch.branch ?? q.branch).toLowerCase(),
@@ -471,7 +480,7 @@ export async function adminBulkDeleteByBranchRow(row: BranchAggregateRow): Promi
   const sets = await adminListAllQuestionSets()
   const targets = sets.filter(
     (q) =>
-      q.regulation === row.regulation && q.branch.toLowerCase() === row.branch.toLowerCase(),
+      regulationMatches(q.regulation, row.regulation) && branchMatches(q.branch, row.branch),
   )
   for (const q of targets) {
     await adminDeleteQuestionSet(q.id)
@@ -488,51 +497,50 @@ export async function adminCloneBranchRow(
   options: { branch: string; regulation: RegulationId },
 ): Promise<number> {
   const newBranch = options.branch.trim().toLowerCase()
-  const newReg = options.regulation
-  if (
-    newBranch === row.branch.toLowerCase() &&
-    newReg === row.regulation
-  ) {
+  const newReg = String(options.regulation).toLowerCase() as RegulationId
+  if (branchMatches(newBranch, row.branch) && regulationMatches(newReg, row.regulation)) {
     throw new Error('Choose a different branch or regulation than the source.')
   }
   if (!newBranch) {
     throw new Error('Enter a target branch code.')
   }
 
-  const sets = await adminListAllQuestionSets()
-  const targets = sets.filter(
-    (q) =>
-      q.regulation === row.regulation && q.branch.toLowerCase() === row.branch.toLowerCase(),
-  )
-
-  let n = 0
-  for (const q of targets) {
-    await adminCreateQuestionSet({
-      title: q.title,
-      regulation: newReg,
-      branch: newBranch,
-      year: q.year,
-      semester: q.semester,
-      subjectName: q.subjectName,
-      subjectCode: q.subjectCode,
-      unitNumber: q.unitNumber,
-      questions: [...q.questions],
-      tags: [...q.tags],
-      keywords: [...q.keywords],
-      pdfUrl: q.pdfUrl,
-      featured: q.featured,
-      important: q.important,
-      popular: q.popular,
-      showOnHome: q.showOnHome,
-      downloadCount: 0,
-      viewCount: 0,
-      shareCount: 0,
-      status: q.status,
-      createdBy: q.createdBy,
-    })
-    n++
+  const targets = await adminListQuestionSetsForBranch(row.regulation, row.branch)
+  if (targets.length === 0) {
+    throw new Error('No question sets found for this branch. Refresh the page and try again.')
   }
-  return n
+
+  const inputs = targets.map((q) => ({
+    title: q.title,
+    regulation: newReg,
+    branch: newBranch,
+    year: q.year,
+    semester: q.semester,
+    subjectName: q.subjectName,
+    subjectCode: q.subjectCode,
+    unitNumber: q.unitNumber,
+    questions: [...q.questions],
+    tags: [...q.tags],
+    keywords: [...q.keywords],
+    pdfUrl: q.pdfUrl,
+    featured: q.featured,
+    important: q.important,
+    popular: q.popular,
+    showOnHome: q.showOnHome,
+    downloadCount: 0,
+    viewCount: 0,
+    shareCount: 0,
+    status: q.status,
+    createdBy: q.createdBy,
+  }))
+
+  const created = await adminBatchCreateQuestionSets(inputs)
+  if (created !== targets.length) {
+    throw new Error(
+      `Clone incomplete: created ${created} of ${targets.length} units. Try again or clone in smaller groups.`,
+    )
+  }
+  return created
 }
 
 /** Public read for home page (no auth). Empty `homeBranchIds` = show all branches. */
