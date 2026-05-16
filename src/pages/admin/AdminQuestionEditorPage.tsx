@@ -94,8 +94,11 @@ function isQuestionStatus(s: string): s is QuestionStatus {
 }
 
 function applySearchPrefill(base: QuestionSet, sp: Record<string, string>, validRegIds: string[]): QuestionSet {
-  const r = sp.regulation?.toLowerCase()
-  if (r && validRegIds.includes(r)) base.regulation = r as RegulationId
+  const r = sp.regulation?.toLowerCase().trim()
+  if (r) {
+    const allowed = validRegIds.includes(r) || /^r\d+$/i.test(r)
+    if (allowed) base.regulation = r as RegulationId
+  }
   if (sp.branch) base.branch = sp.branch
   if (sp.semester) base.semester = sp.semester
   if (sp.subjectName) base.subjectName = decodeURIComponent(sp.subjectName)
@@ -145,11 +148,21 @@ function QuestionEditorForm({
   const [tagsStr, setTagsStr] = useState(() => (initial?.tags ?? []).join(', '))
   const [keywordsStr, setKeywordsStr] = useState(() => (initial?.keywords ?? []).join(', '))
 
+  const urlRegulation = searchPrefill.regulation?.toLowerCase().trim() ?? ''
+
   useEffect(() => {
+    if (!regIds.length) return
+    if (
+      urlRegulation &&
+      form.regulation.toLowerCase() === urlRegulation &&
+      !regIds.includes(form.regulation)
+    ) {
+      return
+    }
     if (!regIds.length || regIds.includes(form.regulation)) return
     const nextReg = (regIds[0] ?? 'r22') as RegulationId
     queueMicrotask(() => setForm((f) => (f.regulation === nextReg ? f : { ...f, regulation: nextReg })))
-  }, [regIds, form.regulation])
+  }, [regIds, form.regulation, urlRegulation])
 
   const slugPreview = useMemo(
     () => computeQuestionSlug(form.subjectName || 'subject', Number(form.unitNumber) || 1),
@@ -157,6 +170,11 @@ function QuestionEditorForm({
   )
 
   const branchTrim = form.branch.trim()
+  const regulationTrim = form.regulation.trim().toLowerCase()
+  const regulationMatch = regulations.find((x) => x.id.toLowerCase() === regulationTrim)
+  const hasRegulationOption = Boolean(regulationMatch)
+  const regulationSelectValue = hasRegulationOption ? regulationMatch!.id : form.regulation
+
   const branchSelectValue = BRANCH_IDS.includes(branchTrim.toLowerCase())
     ? branchTrim.toLowerCase()
     : branchTrim
@@ -279,12 +297,15 @@ function QuestionEditorForm({
           <label className="block">
             <span className="text-xs text-slate-500">Regulation</span>
             <select
-              value={form.regulation}
+              value={regulationSelectValue}
               onChange={(e) =>
                 setForm((f) => ({ ...f, regulation: e.target.value as RegulationId }))
               }
               className="mt-1 w-full rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-sm text-white"
             >
+              {!hasRegulationOption && form.regulation ? (
+                <option value={form.regulation}>{form.regulation.toUpperCase()} (custom)</option>
+              ) : null}
               {regulations.map((r) => (
                 <option key={r.id} value={r.id}>
                   {r.label}
